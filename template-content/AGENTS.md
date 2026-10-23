@@ -19,3 +19,7 @@ For UI work read docs/ai/REUSABLE_COMPONENTS.md first. Prefer shared/ui primitiv
 ## Account management contract
 
 For user lifecycle changes read docs/ai/USER_ADMINISTRATION.md. Protect Administrators and caller account on the server, prohibit elevation via generic roles endpoint, keep policy authorization and CSRF, and test the API and UI together.
+
+## Authentication and account UI
+
+Keep login username/password (not email lookup) in API, tests and React. Preserve independent username/email fields, role and policy checks, antiforgery, and development-only admin/admin compatibility. Read docs/ai/SECURITY.md and docs/ai/USER_ADMINISTRATION.md before modifying identity behavior.

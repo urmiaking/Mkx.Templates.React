@@ -16,6 +16,8 @@ public static class UserLifecycleEndpoints
         group.MapPut("/users/{id:guid}/account", async (Guid id, UpdateUserAccountRequest request,
             UserManager<AppUser> users, ClaimsPrincipal principal) =>
         {
+            if (!ValidName(request.UserName ?? request.Email))
+                return Results.ValidationProblem(new Dictionary<string, string[]> { ["userName"] = ["A valid username is required."] });
             if (!TryEmail(request.Email, out var email))
                 return Results.ValidationProblem(new Dictionary<string, string[]> { ["email"] = ["A valid email is required."] });
 
@@ -23,17 +25,24 @@ public static class UserLifecycleEndpoints
             if (user is null) return Results.NotFound();
             if (await ProtectedAsync(users, user, principal)) return Results.Forbid();
 
-            if (string.Equals(user.Email, email, StringComparison.Ordinal))
+            var name = (request.UserName ?? (string.Equals(user.UserName, user.Email, StringComparison.OrdinalIgnoreCase) ? email : user.UserName))?.Trim() ?? "";
+            if (!ValidName(name))
+                return Results.ValidationProblem(new Dictionary<string, string[]> { ["userName"] = ["A valid username is required."] });
+            var duplicateName = await users.FindByNameAsync(name);
+            if (duplicateName is not null && duplicateName.Id != user.Id)
+                return Results.Conflict(new { title = "Username is already used." });
+            if (string.Equals(user.Email, email, StringComparison.Ordinal) && string.Equals(user.UserName, name, StringComparison.Ordinal))
                 return Results.Ok(await DescribeAsync(users, user));
 
             var other = await users.FindByEmailAsync(email);
             if (other is not null && other.Id != user.Id)
                 return Results.Conflict(new { title = "Email is already used." });
 
-            // Update both fields in one UserManager persistence operation.
+            // Username and email are independent. Legacy email-as-username accounts are updated compatibly.
+            var emailChanged = !string.Equals(user.Email, email, StringComparison.OrdinalIgnoreCase);
             user.Email = email;
-            user.UserName = email;
-            user.EmailConfirmed = false;
+            user.UserName = name;
+            if (emailChanged) user.EmailConfirmed = false;
             var result = await users.UpdateAsync(user);
             if (!result.Succeeded) return IdentityErrors(result);
             await users.UpdateSecurityStampAsync(user);
@@ -97,6 +106,8 @@ public static class UserLifecycleEndpoints
         return group;
     }
 
+    private static bool ValidName(string? name) => !string.IsNullOrWhiteSpace(name) && name.Trim().Length <= 128;
+
     private static bool TryEmail(string? value, out string email)
     {
         email = value?.Trim() ?? "";
@@ -119,5 +130,5 @@ public static class UserLifecycleEndpoints
         new(user.Id, user.Email ?? "", (await users.GetRolesAsync(user)).ToArray(),
             (await users.GetClaimsAsync(user)).Where(c => AppPolicies.IsKnown(c.Type))
                 .Select(c => c.Type).Distinct().ToArray(),
-            user.EmailConfirmed, user.LockoutEnabled && user.LockoutEnd > DateTimeOffset.UtcNow);
+            user.EmailConfirmed, user.LockoutEnabled && user.LockoutEnd > DateTimeOffset.UtcNow, user.UserName ?? "");
 }

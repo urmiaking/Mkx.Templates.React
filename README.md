@@ -52,3 +52,7 @@ The generated app includes reusable, accessible UI foundations and a /components
 ## User administration milestone
 
 The React /users workspace supports account creation, guarded email editing, lock/unlock, deletion, Users membership and direct/role policy updates with server-side authorization. See template-content/docs/ai/USER_ADMINISTRATION.md for routes, protections and limits.
+
+## React username login
+
+The generated app uses username/password like Blazor, with separate email for account contact details. Isolated local Development provides the requested admin/admin demo credentials; Production does not seed fixed demo accounts.

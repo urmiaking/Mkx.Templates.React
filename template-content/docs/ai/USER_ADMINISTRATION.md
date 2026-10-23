@@ -39,3 +39,7 @@ The backend's `AuthenticatedCrudTests.AccountLifecycle_ProtectsAdministratorsAnd
 ## Not yet implemented
 
 Self-service account profile and password changes, email verification delivery and password recovery, MFA/OTP and passkeys, external OIDC, audit event persistence, bulk account import, advanced multi-role administration, email notifications and bulk selection. These require separate milestones and must not be claimed as delivered by this user-administration milestone.
+
+## Independent usernames
+
+Login is username/password. User listing searches username and email, and creation/editing includes both independent fields. Editing an email resets its confirmation, editing a username does not. Legacy email-shaped usernames continue to work; an old email-only client request updates username only if username previously equaled email. Development-only admin/admin is provided for local demo; Production bootstrap requires an explicitly supplied strong administrator.

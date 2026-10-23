@@ -68,3 +68,7 @@ The template ships **without default accounts or passwords**. Administrator boot
 - [Blazor edition](https://www.nuget.org/packages/Mkx.Templates.Blazor)
 
 Maintained as a NuGet **project template**, not a runtime React component package.
+
+## Sign-in
+
+Username and password are used for login; email is separate. Isolated Development has demo admin/admin access only; Production requires secure bootstrap configuration.

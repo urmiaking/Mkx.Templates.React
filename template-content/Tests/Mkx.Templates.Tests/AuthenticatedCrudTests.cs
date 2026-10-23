@@ -1,3 +1,4 @@
+using System.Text.Json;
 using System.Net;
 using System.Security.Claims;
 using Mkx.Templates.Contracts.Authorization;
@@ -53,7 +54,7 @@ public sealed class AuthenticatedCrudTests
 
                 await UseCsrfAsync(client, ct);
                 var signedIn = await client.PostAsJsonAsync("/api/auth/login",
-                    new { email = "qa@example.com", password = "Sample-Testing-Password-123!" }, ct);
+                    new { userName = "qa@example.com", password = "Sample-Testing-Password-123!" }, ct);
                 Assert.Equal(HttpStatusCode.NoContent, signedIn.StatusCode);
 
                 client.DefaultRequestHeaders.Remove("X-CSRF-TOKEN");
@@ -118,7 +119,7 @@ public sealed class AuthenticatedCrudTests
                     (await adminClient.GetAsync("/api/admin/users", ct)).StatusCode);
                 await UseCsrfAsync(adminClient, ct);
                 Assert.Equal(HttpStatusCode.NoContent, (await adminClient.PostAsJsonAsync(
-                    "/api/auth/login", new { email = "root@example.com", password = "Strong-Testing-Password-123!" }, ct)).StatusCode);
+                    "/api/auth/login", new { userName = "root@example.com", password = "Strong-Testing-Password-123!" }, ct)).StatusCode);
                 await UseCsrfAsync(adminClient, ct);
                 Assert.Equal(HttpStatusCode.OK, (await adminClient.GetAsync("/api/admin/users", ct)).StatusCode);
 
@@ -147,7 +148,7 @@ public sealed class AuthenticatedCrudTests
                 });
                 await UseCsrfAsync(memberClient, ct);
                 Assert.Equal(HttpStatusCode.NoContent, (await memberClient.PostAsJsonAsync(
-                    "/api/auth/login", new { email = "member@example.com", password = "Member-Testing-Password-123!" }, ct)).StatusCode);
+                    "/api/auth/login", new { userName = "member@example.com", password = "Member-Testing-Password-123!" }, ct)).StatusCode);
                 await UseCsrfAsync(memberClient, ct);
 
                 Assert.Equal(HttpStatusCode.OK, (await memberClient.GetAsync("/api/work-items/", ct)).StatusCode);
@@ -192,7 +193,7 @@ public sealed class AuthenticatedCrudTests
             }
             await UseCsrfAsync(admin, ct);
             Assert.Equal(HttpStatusCode.NoContent, (await admin.PostAsJsonAsync(
-                "/api/auth/login", new { email = "root@example.com", password = "Strong-Testing-Password-123!" }, ct)).StatusCode);
+                "/api/auth/login", new { userName = "root@example.com", password = "Strong-Testing-Password-123!" }, ct)).StatusCode);
             await UseCsrfAsync(admin, ct);
 
             var created = await admin.PostAsJsonAsync("/api/admin/users",
@@ -240,7 +241,7 @@ public sealed class AuthenticatedCrudTests
             using var memberClient = factory.CreateClient(new WebApplicationFactoryClientOptions { HandleCookies = true });
             await UseCsrfAsync(memberClient, ct);
             Assert.Equal(HttpStatusCode.Unauthorized, (await memberClient.PostAsJsonAsync(
-                "/api/auth/login", new { email = "changed@example.com", password = "Member-Testing-Password-123!" }, ct)).StatusCode);
+                "/api/auth/login", new { userName = "changed@example.com", password = "Member-Testing-Password-123!" }, ct)).StatusCode);
 
             var unlocked = await admin.PutAsJsonAsync($"/api/admin/users/{user.Id}/lock",
                 new UpdateUserLockRequest(false), ct);
@@ -250,7 +251,7 @@ public sealed class AuthenticatedCrudTests
             using var viewerClient = factory.CreateClient(new WebApplicationFactoryClientOptions { HandleCookies = true });
             await UseCsrfAsync(viewerClient, ct);
             Assert.Equal(HttpStatusCode.NoContent, (await viewerClient.PostAsJsonAsync(
-                "/api/auth/login", new { email = "viewer@example.com", password = "Viewer-Testing-Password-123!" }, ct)).StatusCode);
+                "/api/auth/login", new { userName = "viewer@example.com", password = "Viewer-Testing-Password-123!" }, ct)).StatusCode);
             await UseCsrfAsync(viewerClient, ct);
             Assert.Equal(HttpStatusCode.OK, (await viewerClient.GetAsync("/api/admin/users", ct)).StatusCode);
             Assert.Equal(HttpStatusCode.Forbidden, (await viewerClient.PutAsJsonAsync($"/api/admin/users/{user.Id}/lock",
@@ -267,6 +268,86 @@ public sealed class AuthenticatedCrudTests
         }
     }
 
+    [Fact]
+    public async Task DevelopmentDemoAdmin_SignsInByUserName_WithUnchangedCredentials()
+    {
+        var file = Path.Combine(Path.GetTempPath(), $"mkx-devadmin-{Guid.NewGuid():N}.db");
+        var ct = TestContext.Current.CancellationToken;
+        try
+        {
+            await using var factory = new AppFactory(file, enableDemo: true);
+            using var client = factory.CreateClient(new WebApplicationFactoryClientOptions
+                { AllowAutoRedirect = false, HandleCookies = true });
+            using (var scope = factory.Services.CreateScope())
+            {
+                var users = scope.ServiceProvider.GetRequiredService<UserManager<AppUser>>();
+                var account = await users.FindByNameAsync("admin");
+                Assert.NotNull(account);
+                Assert.True(await users.IsInRoleAsync(account, "Administrators"));
+            }
+            await UseCsrfAsync(client, ct);
+            Assert.Equal(HttpStatusCode.Unauthorized,
+                (await client.PostAsJsonAsync("/api/auth/login", new { userName = "admin", password = "wrong" }, ct)).StatusCode);
+            Assert.Equal(HttpStatusCode.NoContent,
+                (await client.PostAsJsonAsync("/api/auth/login", new { userName = "admin", password = "admin" }, ct)).StatusCode);
+            var me = await client.GetFromJsonAsync<JsonElement>("/api/auth/me", ct);
+            Assert.Equal("admin", me.GetProperty("userName").GetString());
+            Assert.True(me.GetProperty("authenticated").GetBoolean());
+        }
+        finally
+        {
+            SqliteConnection.ClearAllPools();
+            if (File.Exists(file)) File.Delete(file);
+        }
+    }
+
+    [Fact]
+    public async Task MemberLogin_UsesUsernameNotEmail_AndKeepsAccountFieldsIndependent()
+    {
+        var file = Path.Combine(Path.GetTempPath(), $"mkx-username-{Guid.NewGuid():N}.db");
+        var ct = TestContext.Current.CancellationToken;
+        try
+        {
+            await using var factory = new AppFactory(file);
+            using var admin = factory.CreateClient(new WebApplicationFactoryClientOptions { HandleCookies = true });
+            using (var scope = factory.Services.CreateScope())
+            {
+                var users = scope.ServiceProvider.GetRequiredService<UserManager<AppUser>>();
+                var roles = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
+                Assert.True((await roles.CreateAsync(new IdentityRole<Guid>("Administrators"))).Succeeded);
+                var root = new AppUser { UserName = "root", Email = "root@example.com", EmailConfirmed = true };
+                Assert.True((await users.CreateAsync(root, "Strong-Testing-Password-123!")).Succeeded);
+                Assert.True((await users.AddToRoleAsync(root, "Administrators")).Succeeded);
+            }
+            await UseCsrfAsync(admin, ct);
+            Assert.Equal(HttpStatusCode.NoContent,
+                (await admin.PostAsJsonAsync("/api/auth/login", new { userName = "root", password = "Strong-Testing-Password-123!" }, ct)).StatusCode);
+            await UseCsrfAsync(admin, ct);
+            var response = await admin.PostAsJsonAsync("/api/admin/users",
+                new CreateUserRequest("member@example.com", "Member-Testing-Password-123!", "member01"), ct);
+            Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+            var user = await response.Content.ReadFromJsonAsync<UserSummary>(cancellationToken: ct);
+            Assert.Equal("member01", user?.UserName);
+            var updated = await admin.PutAsJsonAsync($"/api/admin/users/{user!.Id}/account",
+                new UpdateUserAccountRequest("changed@example.com", "member02"), ct);
+            Assert.Equal(HttpStatusCode.OK, updated.StatusCode);
+            var edited = await updated.Content.ReadFromJsonAsync<UserSummary>(cancellationToken: ct);
+            Assert.Equal("member02", edited?.UserName);
+            Assert.Equal("changed@example.com", edited?.Email);
+            using var member = factory.CreateClient(new WebApplicationFactoryClientOptions { HandleCookies = true });
+            await UseCsrfAsync(member, ct);
+            Assert.Equal(HttpStatusCode.Unauthorized, (await member.PostAsJsonAsync("/api/auth/login",
+                new { userName = "changed@example.com", password = "Member-Testing-Password-123!" }, ct)).StatusCode);
+            Assert.Equal(HttpStatusCode.NoContent, (await member.PostAsJsonAsync("/api/auth/login",
+                new { userName = "member02", password = "Member-Testing-Password-123!" }, ct)).StatusCode);
+        }
+        finally
+        {
+            SqliteConnection.ClearAllPools();
+            if (File.Exists(file)) File.Delete(file);
+        }
+    }
+
     private static async Task UseCsrfAsync(HttpClient client, CancellationToken ct)
     {
         var token = await client.GetFromJsonAsync<TokenResponse>("/api/auth/csrf", ct);
@@ -275,7 +356,7 @@ public sealed class AuthenticatedCrudTests
         client.DefaultRequestHeaders.Add("X-CSRF-TOKEN", token!.Token);
     }
 
-    private sealed class AppFactory(string file) : WebApplicationFactory<Program>
+    private sealed class AppFactory(string file, bool enableDemo = false) : WebApplicationFactory<Program>
     {
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
@@ -285,7 +366,8 @@ public sealed class AuthenticatedCrudTests
                 {
                     ["Database:Provider"] = "Sqlite",
                     ["Database:ApplyMigrationsOnStartup"] = "true",
-                    ["Bootstrap:Enabled"] = "false"
+                    ["Bootstrap:Enabled"] = "false",
+                    ["Bootstrap:DevelopmentAdmin:Enabled"] = enableDemo ? "true" : "false"
                 }));
             builder.ConfigureTestServices(services =>
             {

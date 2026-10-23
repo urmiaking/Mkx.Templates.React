@@ -66,3 +66,7 @@ After first-user bootstrap, the built-in `Administrators` role can manage users 
 ## React Design System
 
 A public interactive component gallery is available at /components. Accessible Dialog/ConfirmDialog, Form/Field, Select, OTP, DataTable and Toast primitives are built into shared/ui, theme-aware and RTL-ready. See docs/ai/REUSABLE_COMPONENTS.md for API samples and current limitations.
+
+## Account access
+
+React uses username/password, independently of email. For isolated local Development, the starter creates an admin/admin demo login; never expose these credentials on a public instance. Production bootstrap remains explicit and requires a strong password.

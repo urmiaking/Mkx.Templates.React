@@ -11,3 +11,5 @@ When touching `/users`, Identity membership, user management policies or account
 7. Add xUnit tests of successful member operations **and denied privilege escalation**. Add Vitest tests of the UI states and guard conditions.
 8. Run `./scripts/verify-template.ps1` from the packaging repository before release. Publishing is automatic from successful `main` CI; do not create version bump commits.
 9. Treat profile/password recovery, MFA, passkeys, external OIDC, audit logging and strict instantaneous cookie revocation as separate, explicitly planned milestones; do not claim them as completed.
+
+11. Keep the username independent of email and use username/password login (Blazor parity). Development demo admin/admin is isolated, idempotent and must never be enabled in Production.

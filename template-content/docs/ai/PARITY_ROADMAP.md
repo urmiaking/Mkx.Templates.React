@@ -51,3 +51,7 @@ Each granted capability is an Identity claim whose **Claim.Type** equals the pol
 ## Next milestone
 
 Implement reusable form/dialog/toast/table foundations in React, complete secure account administration, then identity recovery/MFA and optional OIDC. Add OpenAPI-generated TypeScript contracts before multiplying business features. For each milestone, keep the independent Blazor code untouched unless an explicitly approved shared-contract change is necessary.
+
+## Username parity
+
+React now signs in using username and password like Blazor. Username and email are separate properties. Development may seed a demo admin/admin account; Production never seeds demo credentials.

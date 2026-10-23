@@ -18,6 +18,7 @@ export const permissionLabels: Record<Permission, string> = {
 }
 export type User = {
   id: string
+  userName: string
   email: string
   roles: string[]
   directPermissions: string[]
@@ -31,10 +32,10 @@ const userUrl = (id: string) => '/api/admin/users/' + encodeURIComponent(id)
 export const usersApi = {
   list: (skip = 0, search = '') => request<UsersPage>('/api/admin/users?skip=' + skip + '&take=20&search=' + encodeURIComponent(search)),
   roles: () => request<Role[]>('/api/admin/roles'),
-  create: (email: string, password: string) =>
-    request<User>('/api/admin/users', { method: 'POST', body: JSON.stringify({email,password}) }),
-  updateAccount: (id: string, email: string) =>
-    request<User>(userUrl(id) + '/account', {method:'PUT', body:JSON.stringify({email})}),
+  create: (userName: string, email: string, password: string) =>
+    request<User>('/api/admin/users', { method: 'POST', body: JSON.stringify({userName,email,password}) }),
+  updateAccount: (id: string, userName: string, email: string) =>
+    request<User>(userUrl(id) + '/account', {method:'PUT', body:JSON.stringify({userName,email})}),
   setLocked: (id: string, locked: boolean) =>
     request<User>(userUrl(id) + '/lock', {method:'PUT', body:JSON.stringify({locked})}),
   setRoles: (id: string, roles: string[]) =>

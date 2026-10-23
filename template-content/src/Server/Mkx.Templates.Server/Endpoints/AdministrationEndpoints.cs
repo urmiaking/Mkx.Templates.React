@@ -15,9 +15,10 @@ public static class AdministrationEndpoints
         {
             var query = users.Users.AsNoTracking();
             if (!string.IsNullOrWhiteSpace(search))
-                query = query.Where(u => u.Email != null && u.Email.Contains(search.Trim()));
+                query = query.Where(u => (u.Email != null && u.Email.Contains(search.Trim())) ||
+                    (u.UserName != null && u.UserName.Contains(search.Trim())));
             var total = await query.CountAsync(ct);
-            var page = await query.OrderBy(u => u.Email).Skip(Math.Max(0, skip ?? 0))
+            var page = await query.OrderBy(u => u.UserName).Skip(Math.Max(0, skip ?? 0))
                 .Take(Math.Clamp(take ?? 20, 1, 100)).ToListAsync(ct);
             var results = new List<UserSummary>(page.Count);
             foreach (var user in page) results.Add(await DescribeAsync(users, user));
@@ -30,9 +31,11 @@ public static class AdministrationEndpoints
                 !System.Net.Mail.MailAddress.TryCreate(request.Email, out var address) ||
                 !string.Equals(address.Address, request.Email, StringComparison.OrdinalIgnoreCase))
                 return Results.ValidationProblem(new Dictionary<string, string[]> { ["email"] = ["Valid email is required."] });
+            if (!ValidName(request.UserName ?? request.Email))
+                return Results.ValidationProblem(new Dictionary<string, string[]> { ["userName"] = ["Valid username is required."] });
             if (string.IsNullOrWhiteSpace(request.Password))
                 return Results.ValidationProblem(new Dictionary<string, string[]> { ["password"] = ["Password is required."] });
-            var user = new AppUser { UserName = request.Email.Trim(), Email = request.Email.Trim(), EmailConfirmed = false };
+            var user = new AppUser { UserName = (request.UserName ?? request.Email).Trim(), Email = request.Email.Trim(), EmailConfirmed = false };
             var result = await users.CreateAsync(user, request.Password);
             if (!result.Succeeded)
                 return Results.ValidationProblem(new Dictionary<string, string[]> { ["account"] = result.Errors.Select(e => e.Description).ToArray() });
@@ -96,6 +99,8 @@ public static class AdministrationEndpoints
         group.MapUserLifecycleEndpoints();
         return group;
     }
+    private static bool ValidName(string? name) => !string.IsNullOrWhiteSpace(name) && name.Trim().Length <= 128;
+
     private static bool Valid(UpdatePermissionsRequest? request) =>
         request?.Permissions is not null && request.Permissions.All(AppPolicies.IsKnown);
 
@@ -103,7 +108,7 @@ public static class AdministrationEndpoints
         new(user.Id, user.Email ?? "", (await users.GetRolesAsync(user)).ToArray(),
             (await users.GetClaimsAsync(user)).Where(c => AppPolicies.IsKnown(c.Type))
                 .Select(c => c.Type).Where(AppPolicies.IsKnown).Distinct().ToArray(),
-            user.EmailConfirmed, user.LockoutEnabled && user.LockoutEnd > DateTimeOffset.UtcNow);
+            user.EmailConfirmed, user.LockoutEnabled && user.LockoutEnd > DateTimeOffset.UtcNow, user.UserName ?? "");
 
     private static void EnsureSucceeded(IdentityResult result)
     {

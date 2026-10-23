@@ -105,13 +105,14 @@ if (app.Configuration.GetValue<bool>("Bootstrap:Enabled"))
 {
     await using var scope = app.Services.CreateAsyncScope();
     var users = scope.ServiceProvider.GetRequiredService<UserManager<AppUser>>();
+    var adminName = app.Configuration["Bootstrap:AdminUserName"] ?? app.Configuration["Bootstrap:AdminEmail"];
     var email = app.Configuration["Bootstrap:AdminEmail"];
     var password = app.Configuration["Bootstrap:AdminPassword"];
-    if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
+    if (string.IsNullOrWhiteSpace(adminName) || string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
         throw new InvalidOperationException("Bootstrap explicitly enabled but administrator credentials are missing.");
     if (!await users.Users.AnyAsync())
     {
-        var created = await users.CreateAsync(new AppUser { UserName = email, Email = email, EmailConfirmed = true }, password);
+        var created = await users.CreateAsync(new AppUser { UserName = adminName, Email = email, EmailConfirmed = true }, password);
         if (!created.Succeeded)
             throw new InvalidOperationException("Bootstrap account creation failed: " +
                 string.Join(", ", created.Errors.Select(e => e.Code)));
@@ -123,10 +124,38 @@ if (app.Configuration.GetValue<bool>("Bootstrap:Enabled"))
             if (!roleCreated.Succeeded)
                 throw new InvalidOperationException("Bootstrap role creation failed: " + string.Join(", ", roleCreated.Errors.Select(e => e.Code)));
         }
-        var roleAssigned = await users.AddToRoleAsync(await users.FindByEmailAsync(email) ?? throw new InvalidOperationException("Provisioned user not found."), roleName);
+        var roleAssigned = await users.AddToRoleAsync(await users.FindByNameAsync(adminName) ?? throw new InvalidOperationException("Provisioned user not found."), roleName);
         if (!roleAssigned.Succeeded)
             throw new InvalidOperationException("Bootstrap role assignment failed: " + string.Join(", ", roleAssigned.Errors.Select(e => e.Code)));
         app.Logger.LogWarning("First administrator account provisioned. Disable Bootstrap:Enabled and remove the password secret.");
+    }
+}
+// This preview-only account is never created in production. Do not reset existing
+// accounts or assign administrator rights to a pre-existing user named admin.
+if (app.Environment.IsDevelopment() && app.Configuration.GetValue<bool>("Bootstrap:DevelopmentAdmin:Enabled"))
+{
+    await using var scope = app.Services.CreateAsyncScope();
+    var users = scope.ServiceProvider.GetRequiredService<UserManager<AppUser>>();
+    var existing = await users.FindByNameAsync("admin");
+    if (existing is null)
+    {
+        var roles = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
+        if (!await roles.RoleExistsAsync("Administrators"))
+        {
+            var role = await roles.CreateAsync(new IdentityRole<Guid>("Administrators"));
+            if (!role.Succeeded) throw new InvalidOperationException("Development administrator role creation failed.");
+        }
+        var admin = new AppUser { UserName = "admin", Email = "admin@localhost.invalid", EmailConfirmed = true };
+        // Development compatibility: keep admin/admin without weakening Identity's
+        // 12-character password policy for other users or production.
+        admin.PasswordHash = scope.ServiceProvider.GetRequiredService<IPasswordHasher<AppUser>>()
+            .HashPassword(admin, "admin");
+        var created = await users.CreateAsync(admin);
+        if (!created.Succeeded) throw new InvalidOperationException(
+            "Development administrator creation failed: " + string.Join(", ", created.Errors.Select(e => e.Code)));
+        var assigned = await users.AddToRoleAsync(admin, "Administrators");
+        if (!assigned.Succeeded) throw new InvalidOperationException("Development administrator role assignment failed.");
+        app.Logger.LogWarning("Development-only demo administrator provisioned. Never enable demo credentials in production.");
     }
 }
 app.UseExceptionHandler();

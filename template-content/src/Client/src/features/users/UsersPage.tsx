@@ -13,7 +13,7 @@ import { useToast } from '../../shared/ui/useToast'
 import { accountSchema, createUserSchema } from './users.schema'
 import './users.css'
 
-type Props = { canManage: boolean; canManageClaims: boolean; currentEmail?: string }
+type Props = { canManage: boolean; canManageClaims: boolean; currentUserName?: string }
 const allPermissions = Object.values(policies)
 type Tab = 'account' | 'permissions' | 'role'
 
@@ -44,7 +44,7 @@ function PermissionEditor({value, title, disabled, busy, onSave}: {
   </section>
 }
 
-export function UsersPage({canManage,canManageClaims,currentEmail}:Props) {
+export function UsersPage({canManage,canManageClaims,currentUserName}:Props) {
   const toast=useToast()
   const queryClient=useQueryClient()
   const [search,setSearch]=useState('')
@@ -54,6 +54,7 @@ export function UsersPage({canManage,canManageClaims,currentEmail}:Props) {
   const [tab,setTab]=useState<Tab>('account')
   const [dialog,setDialog]=useState<'create'|'edit'|null>(null)
   const [pendingAction,setPendingAction]=useState<'delete'|'lock'|'unlock'|null>(null)
+  const [userName,setUserName]=useState('')
   const [email,setEmail]=useState('')
   const [password,setPassword]=useState('')
   const [formError,setFormError]=useState('')
@@ -64,7 +65,7 @@ export function UsersPage({canManage,canManageClaims,currentEmail}:Props) {
   const selected=users.data?.items.find(user=>user.id===selectedId)??users.data?.items[0]
   const memberRole=roles.data?.find(role=>role.name==='Users')
   const protectedAccount=!selected || selected.roles.includes('Administrators') ||
-    selected.email.toLocaleLowerCase()===currentEmail?.toLocaleLowerCase()
+    selected.userName.toLocaleLowerCase()===currentUserName?.toLocaleLowerCase()
   const canEdit=canManage&&!protectedAccount
   const canGrant=canManageClaims&&!protectedAccount
   const pages=Math.max(1,Math.ceil((users.data?.total??0)/20))
@@ -80,12 +81,12 @@ export function UsersPage({canManage,canManageClaims,currentEmail}:Props) {
     toast.show(error instanceof Error?error.message:'انجام عملیات ناموفق بود.','error')
   }
   const create=useMutation({
-    mutationFn:({email,password}:{email:string;password:string})=>usersApi.create(email,password),
-    onSuccess:async(user)=>{await refresh();setDialog(null);setPassword('');setEmail('');setSelectedId(user.id);setPage(0);setTerm(user.email);setSearch(user.email);toast.show('کاربر جدید ایجاد شد.','success')}
+    mutationFn:({userName,email,password}:{userName:string;email:string;password:string})=>usersApi.create(userName,email,password),
+    onSuccess:async(user)=>{await refresh();setDialog(null);setPassword('');setUserName('');setEmail('');setSelectedId(user.id);setPage(0);setTerm(user.userName);setSearch(user.userName);toast.show('کاربر جدید ایجاد شد.','success')}
   })
   const update=useMutation({
-    mutationFn:({id,email}:{id:string;email:string})=>usersApi.updateAccount(id,email),
-    onSuccess:async(user)=>{await refresh();setDialog(null);setSelectedId(user.id);setPage(0);setTerm(user.email);setSearch(user.email);toast.show('ایمیل حساب به‌روزرسانی شد.','success')}
+    mutationFn:({id,userName,email}:{id:string;userName:string;email:string})=>usersApi.updateAccount(id,userName,email),
+    onSuccess:async(user)=>{await refresh();setDialog(null);setSelectedId(user.id);setPage(0);setTerm(user.userName);setSearch(user.userName);toast.show('ایمیل حساب به‌روزرسانی شد.','success')}
   })
   const changeLock=useMutation({
     mutationFn:({id,locked}:{id:string;locked:boolean})=>usersApi.setLocked(id,locked),
@@ -113,16 +114,16 @@ export function UsersPage({canManage,canManageClaims,currentEmail}:Props) {
 
   async function submitAccount(event:React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    const parsed=dialog==='create'?createUserSchema.safeParse({email,password}):accountSchema.safeParse({email})
+    const parsed=dialog==='create'?createUserSchema.safeParse({userName,email,password}):accountSchema.safeParse({userName,email})
     if(!parsed.success){setFormError(parsed.error.issues[0]?.message??'اطلاعات نامعتبر است.');return}
     setFormError('')
     try {
-      if(dialog==='create') await create.mutateAsync({email:email.trim(),password})
-      else if(selected) await update.mutateAsync({id:selected.id,email:email.trim()})
+      if(dialog==='create') await create.mutateAsync({userName:userName.trim(),email:email.trim(),password})
+      else if(selected) await update.mutateAsync({id:selected.id,userName:userName.trim(),email:email.trim()})
     } catch(error) {setFormError(error instanceof Error?error.message:'ذخیره ناموفق بود.')}
   }
-  function startCreate(){setEmail('');setPassword('');setFormError('');setDialog('create')}
-  function startEdit(){if(!selected)return;setEmail(selected.email);setFormError('');setDialog('edit')}
+  function startCreate(){setUserName('');setEmail('');setPassword('');setFormError('');setDialog('create')}
+  function startEdit(){if(!selected)return;setUserName(selected.userName);setEmail(selected.email);setFormError('');setDialog('edit')}
   async function confirmAction() {
     if(!selected || !pendingAction)return
     try {
@@ -150,9 +151,9 @@ export function UsersPage({canManage,canManageClaims,currentEmail}:Props) {
         <header className="manage-panel-heading"><div><h2>فهرست کاربران</h2><span>انتخاب کاربر برای مشاهده جزئیات</span></div>
           <button type="button" className="ui-icon-action" aria-label="بارگذاری مجدد" onClick={()=>void refresh()}><RefreshCcw size={18}/></button></header>
         <Form className="manage-search" onSubmit={searchUsers}>
-          <label className="sr-only" htmlFor="manage-search-input">جستجوی ایمیل کاربران</label>
+          <label className="sr-only" htmlFor="manage-search-input">جستجوی کاربران</label>
           <Search size={18} aria-hidden="true"/>
-          <input id="manage-search-input" value={search} placeholder="جستجوی ایمیل..."
+          <input id="manage-search-input" value={search} placeholder="نام کاربری یا ایمیل..."
             onChange={event=>setSearch(event.target.value)}/>
           {search && <button type="button" className="ui-icon-action" aria-label="پاک کردن جستجو"
             onClick={()=>{setSearch('');setTerm('');setPage(0)}}><X size={16}/></button>}
@@ -166,7 +167,8 @@ export function UsersPage({canManage,canManageClaims,currentEmail}:Props) {
               className={'manage-user '+(selected?.id===user.id?'manage-user--selected':'')} onClick={()=>openUser(user)}
               aria-pressed={selected?.id===user.id}>
               <span className="manage-avatar"><Users size={19}/></span>
-              <span className="manage-user-name"><strong dir="ltr">{user.email}</strong>
+              <span className="manage-user-name"><strong dir="ltr">{user.userName}</strong>
+                <small dir="ltr">{user.email}</small>
                 <span>{user.roles.join('، ')||'بدون نقش'} <span aria-hidden="true">·</span>
                   {user.isLocked?' مسدود':' فعال'}</span></span>
               <ChevronLeft size={17} aria-hidden="true"/>
@@ -181,7 +183,7 @@ export function UsersPage({canManage,canManageClaims,currentEmail}:Props) {
       <div className="manage-detail-column">
         {selected ? <Card className="manage-detail-panel">
           <div className="manage-person"><div className="manage-avatar manage-avatar--large"><Users size={27}/></div>
-            <div><h2 dir="ltr">{selected.email}</h2><div className="manage-tags">
+            <div><h2 dir="ltr">{selected.userName}</h2><div className="manage-tags">
               <span className={'manage-pill '+(selected.isLocked?'manage-pill--bad':'manage-pill--good')}>
                 {selected.isLocked?<LockKeyhole size={13}/>:<BadgeCheck size={13}/>}
                 {selected.isLocked?'مسدود':'فعال'}
@@ -197,12 +199,13 @@ export function UsersPage({canManage,canManageClaims,currentEmail}:Props) {
               onClick={()=>setTab('role')}><Shield size={16}/>نقش‌ها</button>
           </nav>
           {tab==='account'&&<div className="manage-detail-body">
+            <div className="manage-info-line"><span>نام کاربری</span><strong dir="ltr">{selected.userName}</strong></div>
             <div className="manage-info-line"><span>آدرس ایمیل</span><strong dir="ltr">{selected.email}</strong></div>
             <div className="manage-info-line"><span>تأیید ایمیل</span><strong>{selected.emailConfirmed?'تأیید شده':'تأیید نشده'}</strong></div>
             <div className="manage-info-line"><span>مجوز مستقیم</span><strong>{selected.directPermissions.length.toLocaleString('fa-IR')} مورد</strong></div>
             {protectedAccount&&<p className="manage-protected"><ShieldCheck size={18}/>این حساب محافظت‌شده است. تغییرات مدیریتی آن در این قسمت مجاز نیست.</p>}
             {canEdit&&<div className="manage-actions">
-              <Button variant="secondary" onClick={startEdit}><Pencil size={16}/>ویرایش ایمیل</Button>
+              <Button variant="secondary" onClick={startEdit}><Pencil size={16}/>ویرایش حساب</Button>
               <Button variant="secondary" onClick={()=>setPendingAction(selected.isLocked?'unlock':'lock')}>
                 {selected.isLocked?<BadgeCheck size={16}/>:<Ban size={16}/>}
                 {selected.isLocked?'رفع مسدودی':'مسدودکردن'}
@@ -244,6 +247,8 @@ export function UsersPage({canManage,canManageClaims,currentEmail}:Props) {
         <Button form="manage-account-form" type="submit" disabled={create.isPending||update.isPending}>
           {create.isPending||update.isPending?'در حال ذخیره...':dialog==='create'?'ایجاد کاربر':'ذخیره تغییرات'}</Button></>}>
       <Form id="manage-account-form" onSubmit={event=>void submitAccount(event)} className="manage-account-form">
+        <Field label="نام کاربری" required>{field=><TextInput id={field.id} type="text" dir="ltr" autoComplete="off" required
+          maxLength={128} value={userName} onChange={event=>{setUserName(event.target.value);setFormError('')}}/>}</Field>
         <Field label="ایمیل" required>{field=><TextInput id={field.id} type="email" dir="ltr" autoComplete="off" required
           maxLength={256} value={email} onChange={event=>{setEmail(event.target.value);setFormError('')}}/>}</Field>
         {dialog==='create'&&<Field label="رمز اولیه" required hint="حداقل ۱۲ کاراکتر">{field=><TextInput id={field.id}

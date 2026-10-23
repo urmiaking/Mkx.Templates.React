@@ -8,12 +8,12 @@ import { Button } from '../../shared/ui/Button'
 import { Card } from '../../shared/ui/Card'
 
 export function LoginPage() {
-  const [email, setEmail] = useState('')
+  const [userName, setUserName] = useState('')
   const [password, setPassword] = useState('')
   const queryClient = useQueryClient()
   const navigate = useNavigate()
   const signIn = useMutation({
-    mutationFn: () => authApi.login(email, password),
+    mutationFn: () => authApi.login(userName, password),
     onSuccess: async () => { await queryClient.invalidateQueries({ queryKey: ['session'] }); navigate('/') }
   })
 
@@ -23,8 +23,8 @@ export function LoginPage() {
       <h1>ورود به فضای کار</h1>
       <p className="muted">برای مدیریت اطلاعات، با حساب کاربری خود وارد شوید.</p>
       <form onSubmit={event => { event.preventDefault(); signIn.mutate() }}>
-        <label htmlFor="email">ایمیل</label>
-        <input id="email" dir="ltr" type="email" required autoComplete="username" value={email} onChange={event => setEmail(event.target.value)} />
+        <label htmlFor="username">نام کاربری</label>
+        <input id="username" dir="ltr" type="text" required autoComplete="username" value={userName} onChange={event => setUserName(event.target.value)} />
         <label htmlFor="password">رمز عبور</label>
         <input id="password" dir="ltr" type="password" required autoComplete="current-password" value={password} onChange={event => setPassword(event.target.value)} />
         {signIn.isError && <p role="alert" className="error">{signIn.error instanceof ApiError && signIn.error.status === 401 ? 'اطلاعات ورود صحیح نیست.' : signIn.error.message}</p>}

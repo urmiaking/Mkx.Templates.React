@@ -79,7 +79,7 @@ export function App() {
               </div></div>}
           </div>
           <button className="icon-button theme-button" aria-label="تغییر تم" onClick={toggle}>{mode === 'dark' ? <Sun size={19}/> : <Moon size={19}/>}</button>
-          {isAuthenticated ? <><span className="user-label" dir="ltr">{session.data?.email}</span><button className="icon-button" disabled={logout.isPending} aria-label="خروج" onClick={() => logout.mutate()}><LogOut size={19}/></button></> : <Link className="button button--secondary button--sm" to="/login"><LogIn size={16}/>ورود</Link>}
+          {isAuthenticated ? <><span className="user-label" dir="ltr">{session.data?.userName}</span><button className="icon-button" disabled={logout.isPending} aria-label="خروج" onClick={() => logout.mutate()}><LogOut size={19}/></button></> : <Link className="button button--secondary button--sm" to="/login"><LogIn size={16}/>ورود</Link>}
         </div>
       </header>
       <main id="main-content">
@@ -88,7 +88,7 @@ export function App() {
           <Route path="/work-items" element={session.isPending ? <div className="page" role="status">در حال بررسی دسترسی...</div> :
             can(policies.workItemsView) ? <WorkItemsPage canManage={can(policies.workItemsManage)}/> : <AccessDenied authenticated={isAuthenticated}/>}/>
           <Route path="/users" element={session.isPending ? <div className="page" role="status">در حال بررسی دسترسی...</div> :
-            can(policies.usersView) ? <UsersPage canManage={can(policies.usersManage)} canManageClaims={can(policies.usersManageClaims)} currentEmail={session.data?.email ?? undefined}/> : <AccessDenied authenticated={isAuthenticated}/>}/>
+            can(policies.usersView) ? <UsersPage canManage={can(policies.usersManage)} canManageClaims={can(policies.usersManageClaims)} currentUserName={session.data?.userName ?? undefined}/> : <AccessDenied authenticated={isAuthenticated}/>}/>
           <Route path="/components" element={<ComponentsPage/>}/>
           <Route path="/login" element={<LoginPage/>}/>
           <Route path="*" element={<div className="page"><Card><h1>صفحه پیدا نشد</h1><Link to="/">بازگشت به داشبورد</Link></Card></div>}/>
