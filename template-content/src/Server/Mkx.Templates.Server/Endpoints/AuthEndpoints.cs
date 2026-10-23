@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Identity;
 using Mkx.Templates.Infrastructure.Persistence;
+using Mkx.Templates.Contracts.Authorization;
 
 namespace Mkx.Templates.Server.Endpoints;
 
@@ -20,9 +21,13 @@ public static class AuthEndpoints
         group.MapGet("/me", async (ClaimsPrincipal principal, UserManager<AppUser> users) =>
         {
             if (principal.Identity?.IsAuthenticated != true)
-                return Results.Ok(new { authenticated = false, email = (string?)null });
+                return Results.Ok(new { authenticated = false, email = (string?)null, permissions = Array.Empty<string>(), roles = Array.Empty<string>() });
             var user = await users.GetUserAsync(principal);
-            return Results.Ok(new { authenticated = user is not null, email = user?.Email });
+            var roles = user is null ? Array.Empty<string>() : (await users.GetRolesAsync(user)).ToArray();
+            var permissions = roles.Contains("Administrators", StringComparer.Ordinal) ? AppPolicies.All.ToArray() :
+                principal.Claims.Where(c => AppPolicies.IsKnown(c.Type)).Select(c => c.Type)
+                    .Where(AppPolicies.IsKnown).Distinct().ToArray();
+            return Results.Ok(new { authenticated = user is not null, email = user?.Email, permissions, roles });
         });
         group.MapPost("/login", async (LoginRequest request, SignInManager<AppUser> signIn, UserManager<AppUser> users) =>
         {

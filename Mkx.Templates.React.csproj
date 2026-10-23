@@ -2,8 +2,11 @@
   <PropertyGroup>
     <PackageType>Template</PackageType>
     <PackageId>Mkx.Templates.React</PackageId>
-    <Version>0.1.0</Version>
+    <Version>0.2.0</Version>
     <Authors>Mkx</Authors>
+    <PackageProjectUrl>https://github.com/urmiaking/Mkx.Templates.React</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/urmiaking/Mkx.Templates.React.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
     <Title>Mkx React + ASP.NET Core Solution Template</Title>
     <Description>Agent-first .NET 10 and React TypeScript ASP.NET Core hosted solution template.</Description>
     <PackageTags>dotnet-new;template;react;typescript;vite;aspnetcore;net10</PackageTags>

@@ -7,3 +7,7 @@ Search for a matching reference feature before introducing a new service, abstra
 Never place database access or secrets in React. Enforce API authorization server-side, not only with UI hiding. For cookie-authenticated unsafe `/api` requests send antiforgery tokens. Keep TypeScript strict, remote state in TanStack Query, shared HTTP transport under `src/Client/src/shared/api`, and feature-local components. Maintain RTL, accessibility, focus and reduced-motion behavior.
 
 Update both sides of an API contract together, include domain/API/client tests, update affected docs, and run `./scripts/verify.ps1` before claiming completion. Packaging changes require the root `./scripts/verify-template.ps1`. Never commit generated folders, default admin credentials or secrets.
+
+## Cross-template compatibility
+
+Read `docs/ai/PARITY_ROADMAP.md` before changing policy names, roles, claim semantics, theme palette identifiers or shared feature contracts. Maintain `Administrators`/`Users` built-in roles and claim-type-as-policy-name behavior. Add tests for authorization and role claim propagation.

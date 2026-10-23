@@ -1,2 +1,6 @@
 # UI conventions
 Strict TypeScript; feature-local api.ts, schema, components, tests. Use shared/api/http.ts (not fetch in page) and TanStack Query for server state. Shared UI components remain UI-library-neutral; CSS variables provide light/dark tokens; React Router owns navigation. Persian RTL is starter default. Accessible labels, focus-visible, keyboard input, errors and reduced motion are mandatory; test 320px layouts. OpenAPI contract code generation is not implemented; coordinate manual request/response changes across server and client.
+
+## Appearance and management
+
+Theme mode and palette are independent persisted preferences (`Theme.Mode` and `Theme.Palette`). Available palettes match the Blazor semantic identifiers: jade, ocean, iris, amber. React uses its own UI primitives, responsive CSS and role-gated `/users` surface. The frontend only hides unavailable actions; the server enforces authorization.

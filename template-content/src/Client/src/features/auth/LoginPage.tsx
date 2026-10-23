@@ -14,7 +14,7 @@ export function LoginPage() {
   const navigate = useNavigate()
   const signIn = useMutation({
     mutationFn: () => authApi.login(email, password),
-    onSuccess: async () => { await queryClient.invalidateQueries({ queryKey: ['session'] }); navigate('/work-items') }
+    onSuccess: async () => { await queryClient.invalidateQueries({ queryKey: ['session'] }); navigate('/') }
   })
 
   return <div className="login-wrap motion-enter">

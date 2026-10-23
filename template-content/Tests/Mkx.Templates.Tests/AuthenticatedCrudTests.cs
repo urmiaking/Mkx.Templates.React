@@ -1,4 +1,6 @@
 using System.Net;
+using System.Security.Claims;
+using Mkx.Templates.Contracts.Authorization;
 using System.Net.Http.Json;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
@@ -39,6 +41,12 @@ public sealed class AuthenticatedCrudTests
                     { UserName = "qa@example.com", Email = "qa@example.com", EmailConfirmed = true },
                     "Sample-Testing-Password-123!");
                     Assert.True(result.Succeeded, string.Join("; ", result.Errors.Select(x => x.Description)));
+                    Assert.True((await users.AddClaimsAsync(
+                        await users.FindByEmailAsync("qa@example.com") ?? throw new Exception("Test user missing"),
+                        [
+                            new Claim(AppPolicies.SampleItems.View, "true"),
+                            new Claim(AppPolicies.SampleItems.Manage, "true")
+                        ])).Succeeded);
                 }
                 var anonymous = await client.PostAsJsonAsync("/api/work-items/", new CreateWorkItemRequest("Forbidden"), ct);
                 Assert.Equal(HttpStatusCode.Unauthorized, anonymous.StatusCode);
@@ -74,6 +82,81 @@ public sealed class AuthenticatedCrudTests
                 Assert.Equal(HttpStatusCode.NoContent, delete.StatusCode);
                 var remaining = await client.GetFromJsonAsync<WorkItemsPage>("/api/work-items/", ct);
                 Assert.Equal(0, remaining?.Total);
+            }
+        }
+        finally
+        {
+            SqliteConnection.ClearAllPools();
+            if (File.Exists(file)) File.Delete(file);
+        }
+    }
+
+    [Fact]
+    public async Task AdminPolicies_AreEnforced_WithSafeMemberCreationAndClaims()
+    {
+        var file = Path.Combine(Path.GetTempPath(), $"mkx-admin-{Guid.NewGuid():N}.db");
+        var ct = TestContext.Current.CancellationToken;
+        try
+        {
+            await using (var factory = new AppFactory(file))
+            {
+                using var adminClient = factory.CreateClient(new WebApplicationFactoryClientOptions
+                {
+                    AllowAutoRedirect = false, HandleCookies = true
+                });
+                using (var scope = factory.Services.CreateScope())
+                {
+                    var users = scope.ServiceProvider.GetRequiredService<UserManager<AppUser>>();
+                    var roles = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
+                    Assert.True((await roles.CreateAsync(new IdentityRole<Guid>("Administrators"))).Succeeded);
+                    var admin = new AppUser { UserName = "root@example.com", Email = "root@example.com" };
+                    Assert.True((await users.CreateAsync(admin, "Strong-Testing-Password-123!")).Succeeded);
+                    Assert.True((await users.AddToRoleAsync(admin, "Administrators")).Succeeded);
+                }
+
+                Assert.Equal(HttpStatusCode.Unauthorized,
+                    (await adminClient.GetAsync("/api/admin/users", ct)).StatusCode);
+                await UseCsrfAsync(adminClient, ct);
+                Assert.Equal(HttpStatusCode.NoContent, (await adminClient.PostAsJsonAsync(
+                    "/api/auth/login", new { email = "root@example.com", password = "Strong-Testing-Password-123!" }, ct)).StatusCode);
+                await UseCsrfAsync(adminClient, ct);
+                Assert.Equal(HttpStatusCode.OK, (await adminClient.GetAsync("/api/admin/users", ct)).StatusCode);
+
+                var createdResponse = await adminClient.PostAsJsonAsync("/api/admin/users",
+                    new CreateUserRequest("member@example.com", "Member-Testing-Password-123!"), ct);
+                Assert.Equal(HttpStatusCode.Created, createdResponse.StatusCode);
+                var member = await createdResponse.Content.ReadFromJsonAsync<UserSummary>(cancellationToken: ct);
+                Assert.NotNull(member);
+                Assert.Contains("Users", member.Roles);
+                Assert.DoesNotContain("Administrators", member.Roles);
+
+                var deniedRole = await adminClient.PutAsJsonAsync("/api/admin/roles/Administrators/permissions",
+                    new UpdatePermissionsRequest([AppPolicies.Users.Manage]), ct);
+                Assert.Equal(HttpStatusCode.Forbidden, deniedRole.StatusCode);
+
+                var badClaim = await adminClient.PutAsJsonAsync($"/api/admin/users/{member.Id}/permissions",
+                    new UpdatePermissionsRequest(["unregistered.permission"]), ct);
+                Assert.Equal(HttpStatusCode.BadRequest, badClaim.StatusCode);
+
+                var claimsResponse = await adminClient.PutAsJsonAsync($"/api/admin/users/{member.Id}/permissions",
+                    new UpdatePermissionsRequest([AppPolicies.SampleItems.View]), ct);
+                Assert.Equal(HttpStatusCode.NoContent, claimsResponse.StatusCode);
+                using var memberClient = factory.CreateClient(new WebApplicationFactoryClientOptions
+                {
+                    AllowAutoRedirect = false, HandleCookies = true
+                });
+                await UseCsrfAsync(memberClient, ct);
+                Assert.Equal(HttpStatusCode.NoContent, (await memberClient.PostAsJsonAsync(
+                    "/api/auth/login", new { email = "member@example.com", password = "Member-Testing-Password-123!" }, ct)).StatusCode);
+                await UseCsrfAsync(memberClient, ct);
+
+                Assert.Equal(HttpStatusCode.OK, (await memberClient.GetAsync("/api/work-items/", ct)).StatusCode);
+                Assert.Equal(HttpStatusCode.Forbidden, (await memberClient.GetAsync("/api/admin/users", ct)).StatusCode);
+                Assert.Equal(HttpStatusCode.Forbidden, (await memberClient.PostAsJsonAsync(
+                    "/api/work-items/", new CreateWorkItemRequest("Not allowed"), ct)).StatusCode);
+                Assert.Equal(HttpStatusCode.Forbidden, (await memberClient.PutAsJsonAsync(
+                    "/api/admin/users/" + member.Id + "/permissions",
+                    new UpdatePermissionsRequest([AppPolicies.Users.ManageClaims]), ct)).StatusCode);
             }
         }
         finally

@@ -1,6 +1,6 @@
 import { request } from '../../shared/api/http'
 
-export type Session = { authenticated: boolean; email: string | null }
+export type Session = { authenticated: boolean; email: string | null; permissions: string[]; roles: string[] }
 
 export const authApi = {
   me: () => request<Session>('/api/auth/me'),

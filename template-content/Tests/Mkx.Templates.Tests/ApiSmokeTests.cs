@@ -29,7 +29,7 @@ public sealed class ApiSmokeTests
             Assert.Equal(HttpStatusCode.OK, live.StatusCode);
 
             var list = await client.GetAsync("/api/work-items/", ct);
-            Assert.Equal(HttpStatusCode.OK, list.StatusCode);
+            Assert.Equal(HttpStatusCode.Unauthorized, list.StatusCode);
 
             var noToken = await client.PostAsJsonAsync("/api/work-items/", new { title = "Should fail" }, ct);
             Assert.Equal(HttpStatusCode.Unauthorized, noToken.StatusCode);

@@ -1,5 +1,8 @@
 using System.Threading.RateLimiting;
 using System.Net;
+using Microsoft.AspNetCore.Authorization;
+using Mkx.Templates.Contracts.Authorization;
+using Mkx.Templates.Server.Authorization;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Identity;
@@ -74,7 +77,9 @@ builder.Services.AddAuthentication(IdentityConstants.ApplicationScheme)
             return Task.CompletedTask;
         };
     });
-builder.Services.AddAuthorization();
+builder.Services.AddSingleton<IAuthorizationHandler, PermissionHandler>();
+builder.Services.AddAuthorization(options => options.AddAppPolicies());
+builder.Services.Configure<SecurityStampValidatorOptions>(options => options.ValidationInterval = TimeSpan.FromMinutes(5));
 builder.Services.AddAntiforgery(options => {
     options.HeaderName = "X-CSRF-TOKEN";
     options.Cookie.SameSite = SameSiteMode.Lax;
@@ -110,8 +115,8 @@ if (app.Configuration.GetValue<bool>("Bootstrap:Enabled"))
         if (!created.Succeeded)
             throw new InvalidOperationException("Bootstrap account creation failed: " +
                 string.Join(", ", created.Errors.Select(e => e.Code)));
-var roles = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
-        const string roleName = "Administrator";
+        var roles = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
+        const string roleName = "Administrators";
         if (!await roles.RoleExistsAsync(roleName))
         {
             var roleCreated = await roles.CreateAsync(new IdentityRole<Guid>(roleName));
@@ -129,6 +134,9 @@ app.Use(async (context, next) =>
 {
     context.Response.Headers.XContentTypeOptions = "nosniff";
     context.Response.Headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
+    if (context.Request.Path.StartsWithSegments("/api/auth") ||
+        context.Request.Path.StartsWithSegments("/api/admin"))
+        context.Response.Headers.CacheControl = "no-store";
     await next();
 });
 app.UseForwardedHeaders();
@@ -161,6 +169,7 @@ app.MapGet("/health/live", () => Results.Ok(new { status = "alive" }));
 if (app.Environment.IsDevelopment()) app.MapOpenApi();
 app.MapAuthEndpoints();
 app.MapWorkItemEndpoints();
+app.MapAdministrationEndpoints();
 app.Map("/api/{**path}", () => Results.NotFound());
 app.MapFallbackToFile("index.html");
 app.Run();

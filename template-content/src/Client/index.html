@@ -7,6 +7,15 @@
     <meta name="description" content="Mkx React + ASP.NET Core starter" />
     <link rel="icon" type="image/svg+xml" href="/icon.svg" />
     <title>Mkx Workspace</title>
+    <script>
+      try {
+        const mode = localStorage.getItem('Theme.Mode') || localStorage.getItem('mkx-appearance')
+        const palette = localStorage.getItem('Theme.Palette')
+        if (mode === 'light' || mode === 'dark') document.documentElement.dataset.theme = mode
+        if (['jade', 'ocean', 'iris', 'amber'].includes(palette)) document.documentElement.dataset.palette = palette
+      } catch { /* Private browsing may block storage; defaults remain accessible. */ }
+    </script>
+
   </head>
   <body>
     <div id="root"></div>
