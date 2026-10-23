@@ -5,20 +5,69 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
-  verify:
-    runs-on: windows-latest
+  fast:
+    name: Fast validation before automatic NuGet release
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 10.0.x
+          dotnet-version: '10.0.x'
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
           cache: npm
           cache-dependency-path: template-content/src/Client/package-lock.json
-      - name: Verify NuGet generation
+      - name: Build and test .NET solution
+        shell: bash
+        run: |
+          set -euo pipefail
+          dotnet build template-content/Mkx.Templates.slnx -c Release --nologo
+          (cd template-content && dotnet test --solution Mkx.Templates.slnx -c Release -v:q)
+      - name: Validate React application
+        working-directory: template-content/src/Client
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci --no-audit --no-fund
+          npm run lint
+          npm run typecheck
+          npm test
+          npm run build
+      - name: Pack and smoke-test the template
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts
+          dotnet pack Mkx.Templates.React.csproj -c Release -o artifacts --nologo
+          package=$(find artifacts -maxdepth 1 -name 'Mkx.Templates.React.*.nupkg' -print -quit)
+          test -n "$package"
+          dotnet new install "$package" --debug:custom-hive "$RUNNER_TEMP/mkx-hive"
+          dotnet new mkx-react -n Acme.Smoke -o "$RUNNER_TEMP/Acme.Smoke" --debug:custom-hive "$RUNNER_TEMP/mkx-hive" --no-update-check
+          test -f "$RUNNER_TEMP/Acme.Smoke/src/Server/Acme.Smoke.Server/Acme.Smoke.Server.csproj"
+          test -f "$RUNNER_TEMP/Acme.Smoke/src/Client/package-lock.json"
+
+  full:
+    name: Complete generated-solution verification
+    if: github.event_name != 'push'
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: template-content/src/Client/package-lock.json
+      - name: Pack, install, generate, build, test and publish
         shell: pwsh
         run: ./scripts/verify-template.ps1

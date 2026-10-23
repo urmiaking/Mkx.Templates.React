@@ -1,39 +1,46 @@
 # Mkx.Templates.React
 
-A distributable **.NET 10 + React 19 + TypeScript** solution template, delivered as a NuGet **template package** (not a runtime library). It is an independent baseline, not a feature-by-feature clone of the Blazor template.
+Agent-friendly **.NET 10 + React 19 + TypeScript** solution template distributed as a NuGet `dotnet new` template. The architecture includes ASP.NET Core hosted React, Domain/Application/Infrastructure layers, Identity, feature-based permissions, EF Core, TanStack Query and responsive RTL appearance.
 
-- Template ID: `Mkx.Templates.React`, short name `mkx-react`.
-- Same-origin React SPA + ASP.NET Core host; one production deployment.
-- Domain, Contracts, Application, Infrastructure, Server, Tests, React/Vite Client.
-- SQLite migrations, Identity cookies + CSRF, policy-based administration and sample CRUD.
-- Feature-first React, Zod, TanStack Query, Router, CSS tokens, light/dark theme, and RTL support.
+![Mkx Templates icon](icon.png)
 
-## Local installation
+## Get started
 
-Requires .NET 10 SDK and Node.js 24+.
+Requirements: .NET 10 SDK and Node.js 24+.
 
 ```powershell
-./scripts/verify-template.ps1
-dotnet pack Mkx.Templates.React.csproj -c Release
-dotnet new install ./bin/Release/Mkx.Templates.React.0.2.0.nupkg
+dotnet new install Mkx.Templates.React
 dotnet new mkx-react -n Acme.Workspace -o Acme.Workspace
 ```
 
-You may also install the editable source template with `dotnet new install ./template-content`.
-See `template-content/README.md` for development and deployment instructions. The checked-in migrations target SQLite; SQL Server needs separate provider-specific migrations.
+The generated application's development, authentication and deployment instructions are in its own README and `AGENTS.md`. Developers can run complete local checks with:
 
-## Blazor / React capabilities
+```powershell
+./scripts/verify-template.ps1
+```
 
-The React template shares the Blazor built-in roles, capability policy names and claim semantics. It includes user administration and four appearance palettes. See `template-content/docs/ai/PARITY_ROADMAP.md` for completed parity and remaining gaps.
+To install an editable template locally, run `dotnet new install ./template-content`. The checked-in migrations target SQLite; SQL Server requires provider-specific migrations.
 
-## NuGet.org release: fast publishing, full CI checks
+## Relationship to Blazor
 
-**Full verification runs once per source commit** in [Verify React Template](.github/workflows/verify.yml) on pushes to `main` and pull requests: install the template, generate a renamed application, build, test and publish it.
+The React and [Blazor templates](https://github.com/urmiaking/Mkx.Templates) are independent packages, but share Identity role names, policy/claim conventions and baseline architecture goals. The React package uses **the exact same icon** as the Blazor package. See [the parity roadmap](template-content/docs/ai/PARITY_ROADMAP.md).
 
-[Publish NuGet Template](.github/workflows/publish.yml) does **not repeat** that expensive verification. It verifies that the exact commit already passed the push CI workflow, checks main-branch ancestry, performs a lightweight NuGet pack/content check and publishes with Trusted Publishing (GitHub OIDC). Tags do not trigger the heavy CI again.
+## Automatic NuGet publishing
 
-Before release, configure [NuGet Trusted Publishing](https://www.nuget.org/account/TrustedPublishing) with Package Owner `mskhodadadi`, GitHub Repository Owner `urmiaking`, Repository `Mkx.Templates.React`, Workflow File `publish.yml` (**basename only**) and Environment `production`. The only necessary scope is *Push new packages and package versions*.
+**Every successful push to `main` automatically publishes a new version to NuGet.org.**
 
-After **Verify React Template** succeeds for the desired commit on `main`, open GitHub Actions → **Publish NuGet Template** → **Run workflow** on `main` and enter a **new unused NuGet version** (for example `0.3.0`). Alternatively, tag a previously verified main commit as `v0.3.0` and push the tag.
+The CI workflow first builds/tests .NET and React, packs the template and verifies template installation/generation. Successful CI for the pushed commit triggers a lightweight NuGet publication workflow, pinned to the *same commit*. No manual version edit, tag, or release button is necessary.
 
-Publication uses the existing GitHub `production` environment and ephemeral OIDC credentials. **Do not add a permanent `NUGET_API_KEY` GitHub secret.** Publishing before the commit's CI is green fails quickly by design. Never attempt to re-publish an existing NuGet version.
+The package version follows the Blazor template's build-number strategy: **`0.3.<publish-workflow-run-number>`**, so successive publication runs use distinct, increasing version numbers without version-bump commits. Source metadata retains version `0.2.0` for local development; CI overrides the published `PackageVersion`.
+
+Full template install/generated-project build/tests/publish still run for pull requests and manually started full verification. They are intentionally not repeated in each publication.
+
+NuGet Trusted Publishing: package owner `mskhodadadi`, GitHub repository `urmiaking/Mkx.Templates.React`, workflow file `publish.yml`, environment `production`. **No permanent NuGet API key secret** is required: GitHub OIDC supplies a temporary key.
+
+The NuGet package contains `icon.png` and a dedicated landing-page README `NUGET_README.md`, as well as the solution template itself.
+
+- [NuGet package](https://www.nuget.org/packages/Mkx.Templates.React)
+- [Verification runs](https://github.com/urmiaking/Mkx.Templates.React/actions/workflows/verify.yml)
+- [Publishing runs](https://github.com/urmiaking/Mkx.Templates.React/actions/workflows/publish.yml)
+
+If validation fails, the package is **not** published. A manual release may be triggered for recovery with a fresh unused version.

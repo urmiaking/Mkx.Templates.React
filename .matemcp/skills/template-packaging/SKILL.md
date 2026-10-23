@@ -1,16 +1,17 @@
-# Mkx React package lifecycle
+# Mkx React template packaging and automatic releases
 
-This repository is a `dotnet new` NuGet template; the generated application source lives under `template-content`. Read the root `AGENTS.md`, generated `AGENTS.md`, and relevant architecture notes before changing application code.
+The repository packages the generated solution in `template-content` as a NuGet `dotnet new` template. Read root `AGENTS.md` and generated `AGENTS.md` before application changes.
 
-## Quality gate
+## Package assets
 
-For changes to application/template content, run `./scripts/verify-template.ps1` locally when feasible. The `.github/workflows/verify.yml` workflow performs expensive install/generation/build/server-client tests/publish checks for pushes to main and pull requests. Keep these full checks, but **never repeat them in the publication workflow**.
+The package includes `icon.png`, **identical to the Blazor template icon**, and `NUGET_README.md`, a dedicated NuGet page. `Mkx.Templates.React.csproj` declares `PackageIcon` and `PackageReadmeFile`. The root `README.md` targets developers, not the package landing page. `scripts/verify-template.ps1` checks both assets in the actual NuGet ZIP.
 
-## Fast NuGet publishing
+## Every main push automatically releases
 
-NuGet Trusted Publishing must match GitHub repository `urmiaking/Mkx.Templates.React`, NuGet account `mskhodadadi`, workflow basename `publish.yml`, and environment `production`. The publish workflow:
-1. Confirms a main-branch commit with successful `verify.yml` push CI for its **exact SHA**.
-2. Performs lightweight NuGet pack/content inspection.
-3. Uses GitHub OIDC via `NuGet/login@v1` and publishes to NuGet.org.
+The React default branch is **`main`** (Blazor uses `master`). Every push runs `.github/workflows/verify.yml` fast .NET/React validation, package integrity and installed-template generation smoke. Success automatically triggers `.github/workflows/publish.yml` through GitHub `workflow_run`. Publication is pinned to the **same verified commit**; failed checks cannot publish.
 
-There is **no permanent NUGET_API_KEY secret**. After full main CI passes, use workflow_dispatch on main with a fresh version or push a semver tag pointing to a verified commit. Tag pushes do not trigger full CI. Never republish a version or commit secrets.
+The published NuGet version is `0.3.<publish workflow run_number>`, increasing automatically without source version-bump commits. **Do not implement a commit-based version bump loop.** Keep full generated-solution verification in pull requests and manual CI, but do not repeat that slow path on every release. For template packaging modifications, run local `./scripts/verify-template.ps1` when feasible.
+
+The publication uses NuGet Trusted Publishing via OIDC; NuGet account `mskhodadadi`, GitHub `urmiaking/Mkx.Templates.React`, workflow basename `publish.yml`, Environment `production`. **No persistent `NUGET_API_KEY` secret** is required. Maintain secure permissions and explicit successful-CI gates.
+
+Never commit build outputs, temporary files, dependency caches or credentials.

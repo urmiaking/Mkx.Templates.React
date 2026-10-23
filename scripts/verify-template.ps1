@@ -18,7 +18,7 @@ try {
   $zip = [System.IO.Compression.ZipFile]::OpenRead($package.FullName)
   try {
     $names = @($zip.Entries | ForEach-Object FullName)
-    foreach ($needed in @('content/.template.config/template.json','content/AGENTS.md','content/src/Client/package-lock.json','content/src/Client/src/main.tsx','content/Mkx.Templates.slnx')) {
+    foreach ($needed in @('icon.png','NUGET_README.md','content/.template.config/template.json','content/AGENTS.md','content/src/Client/package-lock.json','content/src/Client/src/main.tsx','content/Mkx.Templates.slnx')) {
       if ($needed -notin $names) { throw "Missing NuGet content: $needed" }
     }
     $forbidden = $names | Where-Object { $_ -match '/(bin|obj|node_modules|dist|TestResults|coverage|\.git|\.vs)/|/(app.db|\.env|.*\.pfx)$' }
