@@ -21,8 +21,14 @@ describe('Mkx UI',()=>{
    render(<Example/>)
    fireEvent.paste(screen.getByRole('textbox',{name:'رقم 1 از 4'}),{clipboardData:{getData:()=> '۱۲٣4'}})
    expect(screen.getByText('1234')).toBeInTheDocument()
+   for(const [i,digit] of ['۱','۲','۳','۴'].entries())
+     expect(screen.getByRole('textbox',{name:'رقم '+(i+1)+' از 4'})).toHaveValue(digit)
    fireEvent.keyDown(screen.getByRole('textbox',{name:'رقم 4 از 4'}),{key:'Backspace'})
    expect(screen.getByText('123')).toBeInTheDocument()
+   expect(screen.getByRole('textbox',{name:'رقم 4 از 4'})).toHaveValue('')
+   fireEvent.change(screen.getByRole('textbox',{name:'رقم 4 از 4'}),{target:{value:'٥'}})
+   expect(screen.getByText('1235')).toBeInTheDocument()
+   expect(screen.getByRole('textbox',{name:'رقم 4 از 4'})).toHaveValue('۵')
  })
  it('sorts and paginates typed rows without mutating data',()=>{
    type Row={id:string;name:string;score:number}

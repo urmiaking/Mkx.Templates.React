@@ -3,6 +3,8 @@
 :root {
   font-family: Vazirmatn, Tahoma, sans-serif;
   font-synthesis: none;
+  /* Vazirmatn ss01 uses Persian shapes for Latin and Arabic digits. */
+  font-feature-settings: "ss01";
   color-scheme: light;
   --bg: #f5f7f9; --surface: #ffffff; --surface-hover: #f3f8f7;
   --text: #192d37; --muted: #70808c; --line: #e5ebef;
@@ -37,7 +39,7 @@ h1{font-size:clamp(1.7rem,2.5vw,2.5rem)} h2{font-size:1.23rem}
 .status-dot{display:inline-block;width:8px;height:8px;background:#3ed5a4;border-radius:100%;box-shadow:0 0 0 4px rgba(53,193,151,.12);flex-shrink:0}
 .version-label{font-size:.66rem;direction:ltr;display:block;text-align:center;letter-spacing:.08em}
 .content-shell{display:flex;min-width:0;flex-direction:column;min-height:100vh}
-.app-header{height:78px;padding:0 clamp(20px,4vw,62px);background:var(--surface);border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:14px}
+.app-header{position:sticky;top:0;z-index:19;flex-shrink:0;height:78px;padding:0 clamp(20px,4vw,62px);background:var(--surface);border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:14px}
 .header-start,.header-end{display:flex;align-items:center;gap:14px;min-width:0}.breadcrumb{font-size:.83rem;font-weight:600;color:var(--muted)}.breadcrumb span{color:#b6c0c5;padding:0 8px}.header-end{gap:10px}
 .user-label{font-size:.76rem;color:var(--muted);max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .icon-button{border:0;background:transparent;color:var(--muted);width:38px;height:38px;display:inline-grid;place-items:center;border-radius:10px;transition:background .17s,color .17s}

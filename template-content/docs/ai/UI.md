@@ -12,3 +12,9 @@ Before introducing new controls, read docs/ai/REUSABLE_COMPONENTS.md. The public
 ## User administration
 
 The /users screen uses a responsive two-pane layout and feature-local users.css. Keep create/edit dialogs and destructive confirmation on shared components, provide error and pending feedback, and preserve backend-driven search and page boundaries. See docs/ai/USER_ADMINISTRATION.md.
+
+## Sticky header and Persian numerals
+
+The AppBar sticks to the top of document scroll; use normal flow and an appropriate z-index below mobile navigation overlays and modal dialogs. Desktop/mobile heights remain 78/66px. Avoid overflow clipping on its ancestors.
+
+Vazirmatn supports Persian numeral shapes via the OpenType ss01 feature, enabled globally. The reusable OtpField always renders actual Persian Unicode digits while keeping the controlled value/onChange as normalized ASCII for backend consumption. Tests cover pasting Arabic/Persian numerals, display, and ASCII output.

@@ -6,6 +6,9 @@ function normalizeDigits(input: string) {
   return input.replace(/[۰-۹]/g, x => String(x.charCodeAt(0) - 1776))
     .replace(/[٠-٩]/g, x => String(x.charCodeAt(0) - 1632)).replace(/\D/g,'')
 }
+const persianDigits = '۰۱۲۳۴۵۶۷۸۹'
+const displayDigit = (digit: string) => persianDigits[Number(digit)] ?? ''
+
 export function OtpField({value, onChange, length = 6, disabled, label = 'کد یک‌بار مصرف', autoFocus}: Props) {
   const refs = useRef<Array<HTMLInputElement|null>>([])
   const digits = normalizeDigits(value).slice(0,length)
@@ -39,7 +42,7 @@ export function OtpField({value, onChange, length = 6, disabled, label = 'کد �
     {Array.from({length},(_,index)=><input key={index}
       ref={node => { refs.current[index]=node }}
       className="ui-otp__digit"
-      value={digits[index] ?? ''}
+      value={digits[index] ? displayDigit(digits[index]) : ''}
       onChange={event => { const next = normalizeDigits(event.target.value); if (next) insert(index,next); else { const copy=digits.split(''); copy.splice(index,1); onChange(copy.join('')) } }}
       onPaste={event => paste(event,index)}
       onKeyDown={event => onKey(event,index)}

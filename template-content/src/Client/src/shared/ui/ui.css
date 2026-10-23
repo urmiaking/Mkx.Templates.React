@@ -46,7 +46,7 @@
 .ui-otp{display:flex;justify-content:center;gap:9px;direction:ltr;width:100%}
 .ui-otp__digit{width:48px;height:56px;min-width:0;flex:0 1 48px;text-align:center;font-size:1.4rem;font-weight:800;
   border:1px solid var(--line);border-radius:13px;background:var(--surface);color:var(--text);padding:0;direction:ltr;
-  font-variant-numeric:tabular-nums;transition:background .16s,border-color .16s}
+  font-variant-numeric:tabular-nums;font-feature-settings:"ss01","tnum";transition:background .16s,border-color .16s}
 .ui-otp__digit:focus{outline:2px solid var(--primary);outline-offset:2px;border-color:var(--primary);background:var(--tint)}
 .ui-table-shell{border:1px solid var(--line);border-radius:14px;overflow:hidden}
 .ui-table-scroll{max-width:100%;overflow-x:auto;scrollbar-width:thin}
