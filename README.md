@@ -48,3 +48,7 @@ If validation fails, the package is **not** published. A manual release may be t
 ## React UI foundations
 
 The generated app includes reusable, accessible UI foundations and a /components showcase (Dialog, Form/Field, Select, OTP, Table and Toast). These are themeable and library-neutral at the component API level. See template-content/docs/ai/REUSABLE_COMPONENTS.md for usage and limitations.
+
+## User administration milestone
+
+The React /users workspace supports account creation, guarded email editing, lock/unlock, deletion, Users membership and direct/role policy updates with server-side authorization. See template-content/docs/ai/USER_ADMINISTRATION.md for routes, protections and limits.

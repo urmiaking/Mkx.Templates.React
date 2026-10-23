@@ -1,5 +1,5 @@
 # Security
-ASP.NET Core Identity HttpOnly same-origin application cookie and CSRF request header X-CSRF-TOKEN for all unsafe /api requests. Do not store bearer credentials in localStorage. Login is rate limited; sample writes use server-side authorization; business roles require explicit policies. Bootstrap disabled by default; provide initial secret out of band and disable after creation. Persist Data Protection keys and configure trusted reverse proxy headers/HTTPS. MFA/OIDC, audit and account administration are intentionally future modules.
+ASP.NET Core Identity HttpOnly same-origin application cookie and CSRF request header X-CSRF-TOKEN for all unsafe /api requests. Do not store bearer credentials in localStorage. Login is rate limited; sample writes use server-side authorization; business roles require explicit policies. Bootstrap disabled by default; provide initial secret out of band and disable after creation. Persist Data Protection keys and configure trusted reverse proxy headers/HTTPS. MFA/OIDC, audit and self-service profile/password recovery are future modules. Guarded user administration is implemented; see docs/ai/USER_ADMINISTRATION.md.
 
 ## Capabilities
 

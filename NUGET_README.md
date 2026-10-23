@@ -13,7 +13,7 @@ Build ASP.NET Core-hosted React applications with a clean and scalable project s
 | Data fetching | TanStack Query and a typed, shared HTTP client |
 | Validation | Domain invariants + Zod client-side UX validation |
 | Identity | ASP.NET Core Identity, HttpOnly cookies and antiforgery |
-| Permissions | Policy-based authorization, user and role permission administration |
+| Permissions | Policy-based authorization, guarded user lifecycle, Users membership and permission administration |
 | Appearance | Responsive RTL starter, light/dark mode and four color palettes |
 | Reusable UI | Accessible Dialog, ConfirmDialog, Forms, Select, OTP, Table, Toast and interactive /components gallery |
 | Testing | xUnit, Vitest, ESLint, TypeScript checks |

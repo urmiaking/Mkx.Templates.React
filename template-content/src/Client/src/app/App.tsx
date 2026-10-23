@@ -88,7 +88,7 @@ export function App() {
           <Route path="/work-items" element={session.isPending ? <div className="page" role="status">در حال بررسی دسترسی...</div> :
             can(policies.workItemsView) ? <WorkItemsPage canManage={can(policies.workItemsManage)}/> : <AccessDenied authenticated={isAuthenticated}/>}/>
           <Route path="/users" element={session.isPending ? <div className="page" role="status">در حال بررسی دسترسی...</div> :
-            can(policies.usersView) ? <UsersPage canManage={can(policies.usersManage)} canManageClaims={can(policies.usersManageClaims)}/> : <AccessDenied authenticated={isAuthenticated}/>}/>
+            can(policies.usersView) ? <UsersPage canManage={can(policies.usersManage)} canManageClaims={can(policies.usersManageClaims)} currentEmail={session.data?.email ?? undefined}/> : <AccessDenied authenticated={isAuthenticated}/>}/>
           <Route path="/components" element={<ComponentsPage/>}/>
           <Route path="/login" element={<LoginPage/>}/>
           <Route path="*" element={<div className="page"><Card><h1>صفحه پیدا نشد</h1><Link to="/">بازگشت به داشبورد</Link></Card></div>}/>

@@ -15,3 +15,7 @@ Read `docs/ai/PARITY_ROADMAP.md` before changing policy names, roles, claim sema
 ## Reusable UI contract
 
 For UI work read docs/ai/REUSABLE_COMPONENTS.md first. Prefer shared/ui primitives over duplicate dialog, select, field, toast and table implementations. Keep sample showcase at /components useful and tested; do not introduce a mandatory UI kit to feature code.
+
+## Account management contract
+
+For user lifecycle changes read docs/ai/USER_ADMINISTRATION.md. Protect Administrators and caller account on the server, prohibit elevation via generic roles endpoint, keep policy authorization and CSRF, and test the API and UI together.

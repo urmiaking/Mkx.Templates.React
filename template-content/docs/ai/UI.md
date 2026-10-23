@@ -8,3 +8,7 @@ Theme mode and palette are independent persisted preferences (`Theme.Mode` and `
 ## Mkx UI primitives (Phase 1)
 
 Before introducing new controls, read docs/ai/REUSABLE_COMPONENTS.md. The public shared/ui API now includes accessible Dialog, ConfirmDialog, Field/Form/TextInput/TextArea/CheckBox, Select, OtpField, typed DataTable, ToastProvider/useToast, Button/IconButton, Card and Breadcrumbs. A public interactive showcase is available at /components. Internal Radix Dialog/AlertDialog/Select primitives provide robust focus/keyboard behavior without exposing the library to feature consumers. Keep feature components colocated, use semantic tokens from shared/ui/ui.css, and cover interactions in Vitest. Large production tables require server-side pagination; sample DataTable is client-side.
+
+## User administration
+
+The /users screen uses a responsive two-pane layout and feature-local users.css. Keep create/edit dialogs and destructive confirmation on shared components, provide error and pending feedback, and preserve backend-driven search and page boundaries. See docs/ai/USER_ADMINISTRATION.md.

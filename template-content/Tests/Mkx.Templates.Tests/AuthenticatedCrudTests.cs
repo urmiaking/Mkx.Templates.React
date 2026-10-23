@@ -166,6 +166,107 @@ public sealed class AuthenticatedCrudTests
         }
     }
 
+    [Fact]
+    public async Task AccountLifecycle_ProtectsAdministratorsAndSelf_AndEnforcesPolicies()
+    {
+        var file = Path.Combine(Path.GetTempPath(), $"mkx-lifecycle-{Guid.NewGuid():N}.db");
+        var ct = TestContext.Current.CancellationToken;
+        try
+        {
+            await using var factory = new AppFactory(file);
+            using var admin = factory.CreateClient(new WebApplicationFactoryClientOptions
+            {
+                AllowAutoRedirect = false, HandleCookies = true
+            });
+            using (var scope = factory.Services.CreateScope())
+            {
+                var users = scope.ServiceProvider.GetRequiredService<UserManager<AppUser>>();
+                var roles = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
+                Assert.True((await roles.CreateAsync(new IdentityRole<Guid>("Administrators"))).Succeeded);
+                var root = new AppUser { UserName = "root@example.com", Email = "root@example.com", EmailConfirmed = true };
+                Assert.True((await users.CreateAsync(root, "Strong-Testing-Password-123!")).Succeeded);
+                Assert.True((await users.AddToRoleAsync(root, "Administrators")).Succeeded);
+                var viewer = new AppUser { UserName = "viewer@example.com", Email = "viewer@example.com" };
+                Assert.True((await users.CreateAsync(viewer, "Viewer-Testing-Password-123!")).Succeeded);
+                Assert.True((await users.AddClaimAsync(viewer, new Claim(AppPolicies.Users.View, "true"))).Succeeded);
+            }
+            await UseCsrfAsync(admin, ct);
+            Assert.Equal(HttpStatusCode.NoContent, (await admin.PostAsJsonAsync(
+                "/api/auth/login", new { email = "root@example.com", password = "Strong-Testing-Password-123!" }, ct)).StatusCode);
+            await UseCsrfAsync(admin, ct);
+
+            var created = await admin.PostAsJsonAsync("/api/admin/users",
+                new CreateUserRequest("member@example.com", "Member-Testing-Password-123!"), ct);
+            Assert.Equal(HttpStatusCode.Created, created.StatusCode);
+            var user = await created.Content.ReadFromJsonAsync<UserSummary>(cancellationToken: ct);
+            Assert.NotNull(user);
+
+            var usersPage = await admin.GetFromJsonAsync<UsersPage>("/api/admin/users", ct);
+            var rootSummary = Assert.Single(usersPage!.Items, x => x.Email == "root@example.com");
+            var selfDelete = await admin.DeleteAsync($"/api/admin/users/{rootSummary.Id}", ct);
+            Assert.Equal(HttpStatusCode.Forbidden, selfDelete.StatusCode);
+            var protectedEdit = await admin.PutAsJsonAsync($"/api/admin/users/{rootSummary.Id}/account",
+                new UpdateUserAccountRequest("renamed-root@example.com"), ct);
+            Assert.Equal(HttpStatusCode.Forbidden, protectedEdit.StatusCode);
+
+            var invalidRole = await admin.PutAsJsonAsync($"/api/admin/users/{user.Id}/roles",
+                new UpdateUserRolesRequest(["Administrators"]), ct);
+            Assert.Equal(HttpStatusCode.BadRequest, invalidRole.StatusCode);
+
+            var edited = await admin.PutAsJsonAsync($"/api/admin/users/{user.Id}/account",
+                new UpdateUserAccountRequest("changed@example.com"), ct);
+            Assert.Equal(HttpStatusCode.OK, edited.StatusCode);
+            var summary = await edited.Content.ReadFromJsonAsync<UserSummary>(cancellationToken: ct);
+            Assert.Equal("changed@example.com", summary!.Email);
+            Assert.False(summary.EmailConfirmed);
+
+            var duplicate = await admin.PutAsJsonAsync($"/api/admin/users/{user.Id}/account",
+                new UpdateUserAccountRequest("root@example.com"), ct);
+            Assert.Equal(HttpStatusCode.Conflict, duplicate.StatusCode);
+
+            var noMembership = await admin.PutAsJsonAsync($"/api/admin/users/{user.Id}/roles",
+                new UpdateUserRolesRequest([]), ct);
+            Assert.Equal(HttpStatusCode.OK, noMembership.StatusCode);
+            var member = await noMembership.Content.ReadFromJsonAsync<UserSummary>(cancellationToken: ct);
+            Assert.DoesNotContain("Users", member!.Roles);
+            var membership = await admin.PutAsJsonAsync($"/api/admin/users/{user.Id}/roles",
+                new UpdateUserRolesRequest(["Users"]), ct);
+            Assert.Equal(HttpStatusCode.OK, membership.StatusCode);
+
+            var locked = await admin.PutAsJsonAsync($"/api/admin/users/{user.Id}/lock",
+                new UpdateUserLockRequest(true), ct);
+            Assert.Equal(HttpStatusCode.OK, locked.StatusCode);
+            Assert.True((await locked.Content.ReadFromJsonAsync<UserSummary>(cancellationToken: ct))!.IsLocked);
+            using var memberClient = factory.CreateClient(new WebApplicationFactoryClientOptions { HandleCookies = true });
+            await UseCsrfAsync(memberClient, ct);
+            Assert.Equal(HttpStatusCode.Unauthorized, (await memberClient.PostAsJsonAsync(
+                "/api/auth/login", new { email = "changed@example.com", password = "Member-Testing-Password-123!" }, ct)).StatusCode);
+
+            var unlocked = await admin.PutAsJsonAsync($"/api/admin/users/{user.Id}/lock",
+                new UpdateUserLockRequest(false), ct);
+            Assert.Equal(HttpStatusCode.OK, unlocked.StatusCode);
+            Assert.False((await unlocked.Content.ReadFromJsonAsync<UserSummary>(cancellationToken: ct))!.IsLocked);
+
+            using var viewerClient = factory.CreateClient(new WebApplicationFactoryClientOptions { HandleCookies = true });
+            await UseCsrfAsync(viewerClient, ct);
+            Assert.Equal(HttpStatusCode.NoContent, (await viewerClient.PostAsJsonAsync(
+                "/api/auth/login", new { email = "viewer@example.com", password = "Viewer-Testing-Password-123!" }, ct)).StatusCode);
+            await UseCsrfAsync(viewerClient, ct);
+            Assert.Equal(HttpStatusCode.OK, (await viewerClient.GetAsync("/api/admin/users", ct)).StatusCode);
+            Assert.Equal(HttpStatusCode.Forbidden, (await viewerClient.PutAsJsonAsync($"/api/admin/users/{user.Id}/lock",
+                new UpdateUserLockRequest(true), ct)).StatusCode);
+            Assert.Equal(HttpStatusCode.Forbidden, (await viewerClient.DeleteAsync($"/api/admin/users/{user.Id}", ct)).StatusCode);
+
+            Assert.Equal(HttpStatusCode.NoContent, (await admin.DeleteAsync($"/api/admin/users/{user.Id}", ct)).StatusCode);
+            Assert.Equal(HttpStatusCode.NotFound, (await admin.DeleteAsync($"/api/admin/users/{user.Id}", ct)).StatusCode);
+        }
+        finally
+        {
+            SqliteConnection.ClearAllPools();
+            if (File.Exists(file)) File.Delete(file);
+        }
+    }
+
     private static async Task UseCsrfAsync(HttpClient client, CancellationToken ct)
     {
         var token = await client.GetFromJsonAsync<TokenResponse>("/api/auth/csrf", ct);

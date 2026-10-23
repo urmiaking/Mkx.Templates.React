@@ -1,4 +1,4 @@
-﻿# Mkx Templates: Blazor â†” React capability parity
+# Mkx Templates: Blazor â†” React capability parity
 
 The two templates are **independent repositories and distribution packages**, but intentionally share conventions for the application core. Parity means equivalent behavior/contracts, **not** identical component runtimes.
 
@@ -27,7 +27,7 @@ The React backend uses explicitly registered policies rather than Blazor's dynam
 
 | Area | Status / next work |
 | --- | --- |
-| Full user edit/delete, role membership editor and account protection | React has creation/listing/permission updates only; extend with guarded lifecycle operations |
+| Full user edit/delete, role membership editor and account protection | React now has guarded member account editing, deletion, lock/unlock, Users membership and permission updates; self-service profile, MFA and advanced role management remain separate |
 | Account profile, password change/recovery, MFA/passkeys, OTP/SMS | Not yet ported to React |
 | External OIDC/BirSign sign-in | Not yet ported to React |
 | Blazor dialog/form/table/toast/OTP primitives | **Phase 1 baseline implemented**: Dialog, ConfirmDialog, Form/Field, Select, OTP, DataTable, Toast, Button/IconButton, Breadcrumbs; refine feature-specific patterns as needed |

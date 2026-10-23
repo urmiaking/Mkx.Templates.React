@@ -93,6 +93,7 @@ public static class AdministrationEndpoints
             EnsureSucceeded(await users.UpdateSecurityStampAsync(user));
             return Results.NoContent();
         }).RequireAuthorization(AppPolicies.Users.ManageClaims);
+        group.MapUserLifecycleEndpoints();
         return group;
     }
     private static bool Valid(UpdatePermissionsRequest? request) =>
@@ -101,7 +102,8 @@ public static class AdministrationEndpoints
     private static async Task<UserSummary> DescribeAsync(UserManager<AppUser> users, AppUser user) =>
         new(user.Id, user.Email ?? "", (await users.GetRolesAsync(user)).ToArray(),
             (await users.GetClaimsAsync(user)).Where(c => AppPolicies.IsKnown(c.Type))
-                .Select(c => c.Type).Where(AppPolicies.IsKnown).Distinct().ToArray());
+                .Select(c => c.Type).Where(AppPolicies.IsKnown).Distinct().ToArray(),
+            user.EmailConfirmed, user.LockoutEnabled && user.LockoutEnd > DateTimeOffset.UtcNow);
 
     private static void EnsureSucceeded(IdentityResult result)
     {
