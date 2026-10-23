@@ -1,7 +1,16 @@
 # Mkx React package lifecycle
 
-This project is a dotnet new NuGet template with authoritative generated solution under `template-content`. Read root `AGENTS.md` then generated `AGENTS.md`. Packaging changes require `./scripts/verify-template.ps1`: source build/tests, NuGet pack, inspect exclusions, isolated hive installation, generation with name replacement and build/test/publish of the generated output. Avoid modifying the sibling Blazor repository. Never commit output/caches or publish without user-specified destination.
+This repository is a `dotnet new` NuGet template; the generated application source lives under `template-content`. Read the root `AGENTS.md`, generated `AGENTS.md`, and relevant architecture notes before changing application code.
 
-## NuGet release process
+## Quality gate
 
-Use .github/workflows/publish.yml with GitHub OIDC and NuGet/login@v1; publish is gated by GitHub production environment. The policy on nuget.org must match repository owner urmiaking, repository Mkx.Templates.React, workflow basename publish.yml, environment production, and the NuGet account username mskhodadadi. Do not create NUGET_API_KEY secrets for this workflow. Tag releases vX.Y.Z or manually dispatch from main with a unique package version only after the trusted publishing policy is saved. Always require full template install, generated-solution tests, package validation, and publish verification before claiming release.
+For changes to application/template content, run `./scripts/verify-template.ps1` locally when feasible. The `.github/workflows/verify.yml` workflow performs expensive install/generation/build/server-client tests/publish checks for pushes to main and pull requests. Keep these full checks, but **never repeat them in the publication workflow**.
+
+## Fast NuGet publishing
+
+NuGet Trusted Publishing must match GitHub repository `urmiaking/Mkx.Templates.React`, NuGet account `mskhodadadi`, workflow basename `publish.yml`, and environment `production`. The publish workflow:
+1. Confirms a main-branch commit with successful `verify.yml` push CI for its **exact SHA**.
+2. Performs lightweight NuGet pack/content inspection.
+3. Uses GitHub OIDC via `NuGet/login@v1` and publishes to NuGet.org.
+
+There is **no permanent NUGET_API_KEY secret**. After full main CI passes, use workflow_dispatch on main with a fresh version or push a semver tag pointing to a verified commit. Tag pushes do not trigger full CI. Never republish a version or commit secrets.

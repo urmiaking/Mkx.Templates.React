@@ -1,14 +1,14 @@
 # Mkx.Templates.React
 
-A distributable **.NET 10 + React 19 + TypeScript** solution template. Distributed as a **NuGet template package**, not a runtime library. This is a new independent architecture, not an unverified 1:1 port of the existing Blazor SDK.
+A distributable **.NET 10 + React 19 + TypeScript** solution template, delivered as a NuGet **template package** (not a runtime library). It is an independent baseline, not a feature-by-feature clone of the Blazor template.
 
 - Template ID: `Mkx.Templates.React`, short name `mkx-react`.
-- Same-origin React SPA + ASP.NET Core host; one deployable application.
+- Same-origin React SPA + ASP.NET Core host; one production deployment.
 - Domain, Contracts, Application, Infrastructure, Server, Tests, React/Vite Client.
-- SQLite initial migration, ASP.NET Core Identity cookies + CSRF, sample CRUD with concurrency, test suites.
-- Frontend feature-first, Zod, React Query, Router, CSS tokens; no UI-kit lock-in.
+- SQLite migrations, Identity cookies + CSRF, policy-based administration and sample CRUD.
+- Feature-first React, Zod, TanStack Query, Router, CSS tokens, light/dark theme, and RTL support.
 
-## Build and install
+## Local installation
 
 Requires .NET 10 SDK and Node.js 24+.
 
@@ -19,33 +19,21 @@ dotnet new install ./bin/Release/Mkx.Templates.React.0.2.0.nupkg
 dotnet new mkx-react -n Acme.Workspace -o Acme.Workspace
 ```
 
-Or install the editable template: `dotnet new install ./template-content`.
+You may also install the editable source template with `dotnet new install ./template-content`.
+See `template-content/README.md` for development and deployment instructions. The checked-in migrations target SQLite; SQL Server needs separate provider-specific migrations.
 
-The full generated-application guide is in `template-content/README.md`. No credentials are shipped. SQL Server needs separate provider-specific EF migrations; checked-in migrations target SQLite.
+## Blazor / React capabilities
 
-## Shared Blazor / React baseline
+The React template shares the Blazor built-in roles, capability policy names and claim semantics. It includes user administration and four appearance palettes. See `template-content/docs/ai/PARITY_ROADMAP.md` for completed parity and remaining gaps.
 
-The current React template aligns Identity built-in roles, capability claim types and sample/user policy names with `Mkx.Templates.Blazor`, and includes a policy-controlled user administration UI and four appearance palettes. The migration matrix and next milestones live in `template-content/docs/ai/PARITY_ROADMAP.md`.
+## NuGet.org release: fast publishing, full CI checks
 
+**Full verification runs once per source commit** in [Verify React Template](.github/workflows/verify.yml) on pushes to `main` and pull requests: install the template, generate a renamed application, build, test and publish it.
 
-## Publishing the NuGet template
+[Publish NuGet Template](.github/workflows/publish.yml) does **not repeat** that expensive verification. It verifies that the exact commit already passed the push CI workflow, checks main-branch ancestry, performs a lightweight NuGet pack/content check and publishes with Trusted Publishing (GitHub OIDC). Tags do not trigger the heavy CI again.
 
-The GitHub repository contains `.github/workflows/publish.yml`. Its `verify-and-pack` job validates
-source + a freshly generated, renamed solution and packages a release version; its
-`publish` job uses **NuGet Trusted Publishing (GitHub OIDC)** within the GitHub
-`production` environment. There is no long-lived NuGet API key to manage.
+Before release, configure [NuGet Trusted Publishing](https://www.nuget.org/account/TrustedPublishing) with Package Owner `mskhodadadi`, GitHub Repository Owner `urmiaking`, Repository `Mkx.Templates.React`, Workflow File `publish.yml` (**basename only**) and Environment `production`. The only necessary scope is *Push new packages and package versions*.
 
-Before first publish, create a policy at https://www.nuget.org/account/TrustedPublishing
-with Package Owner `mskhodadadi`, Repository Owner `urmiaking`, Repository
-`Mkx.Templates.React`, **Workflow File `publish.yml`** (basename only), and
-Environment `production`. Allow *Push new packages and package versions*;
-do not grant Unlist/Relist unless you actually need it.
+After **Verify React Template** succeeds for the desired commit on `main`, open GitHub Actions → **Publish NuGet Template** → **Run workflow** on `main` and enter a **new unused NuGet version** (for example `0.3.0`). Alternatively, tag a previously verified main commit as `v0.3.0` and push the tag.
 
-After saving the NuGet policy, go to **Actions → Publish NuGet Template → Run workflow**
-on **main**, supply a new unused version (e.g. `0.2.0`), and monitor both jobs.
-Alternatively, after the policy exists, pushing a version tag `vX.Y.Z` starts the workflow.
-Never republish an existing NuGet version; increment it.
-
-GitHub Settings → Environments → `production` can optionally restrict who may approve
-publishing. OIDC provides the token automatically; **do not create `NUGET_API_KEY`
-in GitHub Secrets** for this workflow. See [NuGet Trusted Publishing](https://learn.microsoft.com/en-us/nuget/nuget-org/trusted-publishing).
+Publication uses the existing GitHub `production` environment and ephemeral OIDC credentials. **Do not add a permanent `NUGET_API_KEY` GitHub secret.** Publishing before the commit's CI is green fails quickly by design. Never attempt to re-publish an existing NuGet version.
