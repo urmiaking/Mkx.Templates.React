@@ -15,6 +15,7 @@ Build ASP.NET Core-hosted React applications with a clean and scalable project s
 | Identity | ASP.NET Core Identity, HttpOnly cookies and antiforgery |
 | Permissions | Policy-based authorization, user and role permission administration |
 | Appearance | Responsive RTL starter, light/dark mode and four color palettes |
+| Reusable UI | Accessible Dialog, ConfirmDialog, Forms, Select, OTP, Table, Toast and interactive /components gallery |
 | Testing | xUnit, Vitest, ESLint, TypeScript checks |
 | Delivery | One ASP.NET Core host, Docker, CI and template validation |
 | AI agents | `AGENTS.md`, architecture guides and repeatable feature workflows |

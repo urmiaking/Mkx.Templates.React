@@ -44,3 +44,7 @@ The NuGet package contains `icon.png` and a dedicated landing-page README `NUGET
 - [Publishing runs](https://github.com/urmiaking/Mkx.Templates.React/actions/workflows/publish.yml)
 
 If validation fails, the package is **not** published. A manual release may be triggered for recovery with a fresh unused version.
+
+## React UI foundations
+
+The generated app includes reusable, accessible UI foundations and a /components showcase (Dialog, Form/Field, Select, OTP, Table and Toast). These are themeable and library-neutral at the component API level. See template-content/docs/ai/REUSABLE_COMPONENTS.md for usage and limitations.

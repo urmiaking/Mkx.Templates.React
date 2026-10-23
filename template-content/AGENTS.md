@@ -11,3 +11,7 @@ Update both sides of an API contract together, include domain/API/client tests, 
 ## Cross-template compatibility
 
 Read `docs/ai/PARITY_ROADMAP.md` before changing policy names, roles, claim semantics, theme palette identifiers or shared feature contracts. Maintain `Administrators`/`Users` built-in roles and claim-type-as-policy-name behavior. Add tests for authorization and role claim propagation.
+
+## Reusable UI contract
+
+For UI work read docs/ai/REUSABLE_COMPONENTS.md first. Prefer shared/ui primitives over duplicate dialog, select, field, toast and table implementations. Keep sample showcase at /components useful and tested; do not introduce a mandatory UI kit to feature code.

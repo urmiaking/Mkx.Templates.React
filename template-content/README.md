@@ -62,3 +62,7 @@ See `AGENTS.md` and `docs/ai/` for feature implementation, security boundaries, 
 ## Authorization and user administration
 
 After first-user bootstrap, the built-in `Administrators` role can manage users at `/users`. New accounts receive the `Users` role and read-only sample access; other permissions are explicit and enforced by the API. The `Administrators` role cannot be changed by the general permission editor. Changes to claims invalidate security stamps; users may need to sign in again. See `docs/ai/PARITY_ROADMAP.md` for the Blazor/React compatibility contract and remaining gaps.
+
+## React Design System
+
+A public interactive component gallery is available at /components. Accessible Dialog/ConfirmDialog, Form/Field, Select, OTP, DataTable and Toast primitives are built into shared/ui, theme-aware and RTL-ready. See docs/ai/REUSABLE_COMPONENTS.md for API samples and current limitations.

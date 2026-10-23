@@ -6,18 +6,22 @@ import { workItemSchema } from './work-item.schema'
 import type { WorkItem } from './work-item.schema'
 import { Button } from '../../shared/ui/Button'
 import { Card } from '../../shared/ui/Card'
+import { ConfirmDialog } from '../../shared/ui/ConfirmDialog'
+import { useToast } from '../../shared/ui/useToast'
 import { ApiError } from '../../shared/api/http'
 
 export function WorkItemsPage({ canManage }: { canManage: boolean }) {
   const [title, setTitle] = useState('')
+  const [pendingDeletion, setPendingDeletion] = useState<WorkItem | null>(null)
+  const toast = useToast()
   const [skip, setSkip] = useState(0)
   const [validationError, setValidationError] = useState('')
   const queryClient = useQueryClient()
   const items = useQuery({ queryKey: ['work-items', skip], queryFn: () => workItemApi.list(skip) })
   const refresh = () => queryClient.invalidateQueries({ queryKey: ['work-items'] })
-  const add = useMutation({ mutationFn: workItemApi.create, onSuccess: () => { setTitle(''); setSkip(0); refresh() } })
-  const toggle = useMutation({ mutationFn: workItemApi.update, onSuccess: refresh })
-  const remove = useMutation({ mutationFn: workItemApi.delete, onSuccess: refresh })
+  const add = useMutation({ mutationFn: workItemApi.create, onSuccess: () => { setTitle(''); setSkip(0); refresh(); toast.show('کار جدید ثبت شد.','success') } })
+  const toggle = useMutation({ mutationFn: workItemApi.update, onSuccess: () => { refresh(); toast.show('تغییرات ذخیره شد.','success') } })
+  const remove = useMutation({ mutationFn: workItemApi.delete, onSuccess: () => { refresh(); toast.show('کار حذف شد.','success') } })
   const failure = add.error || toggle.error || remove.error
 
   function submit(event: React.FormEvent) {
@@ -35,7 +39,7 @@ export function WorkItemsPage({ canManage }: { canManage: boolean }) {
       </button>
       <span className={item.isComplete ? 'task-finished' : ''}>{item.title}</span>
       <span className="task-date" title={new Date(item.createdAt).toLocaleString('fa-IR')}>{new Date(item.createdAt).toLocaleDateString('fa-IR')}</span>
-      <button className="icon-button danger" aria-label={'حذف ' + item.title} disabled={!canManage || remove.isPending} onClick={() => { if (window.confirm('این مورد حذف شود؟')) remove.mutate(item) }}><Trash2 size={17}/></button>
+      <button className="icon-button danger" aria-label={'حذف ' + item.title} disabled={!canManage || remove.isPending} onClick={() => setPendingDeletion(item)}><Trash2 size={17}/></button>
     </li>
   }
 
@@ -64,5 +68,9 @@ export function WorkItemsPage({ canManage }: { canManage: boolean }) {
           <Button variant="secondary" disabled={skip + 20 >= (items.data?.total || 0)} onClick={() => setSkip(skip + 20)}>بعدی</Button>
         </div>}
     </Card>
+    <ConfirmDialog open={pendingDeletion !== null} onOpenChange={value => { if (!value) setPendingDeletion(null) }}
+      title="حذف کار؟" description={pendingDeletion ? '«' + pendingDeletion.title + '» حذف خواهد شد.' : ''}
+      destructive confirmLabel="حذف کار"
+      onConfirm={async () => { if (pendingDeletion) await remove.mutateAsync(pendingDeletion) }}/>
   </div>
 }

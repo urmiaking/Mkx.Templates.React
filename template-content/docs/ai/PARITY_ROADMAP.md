@@ -1,8 +1,8 @@
-# Mkx Templates: Blazor ↔ React capability parity
+﻿# Mkx Templates: Blazor â†” React capability parity
 
 The two templates are **independent repositories and distribution packages**, but intentionally share conventions for the application core. Parity means equivalent behavior/contracts, **not** identical component runtimes.
 
-## Shared baseline — implemented
+## Shared baseline â€” implemented
 
 | Capability | Blazor | React |
 | --- | --- | --- |
@@ -30,7 +30,7 @@ The React backend uses explicitly registered policies rather than Blazor's dynam
 | Full user edit/delete, role membership editor and account protection | React has creation/listing/permission updates only; extend with guarded lifecycle operations |
 | Account profile, password change/recovery, MFA/passkeys, OTP/SMS | Not yet ported to React |
 | External OIDC/BirSign sign-in | Not yet ported to React |
-| Blazor native dialog/form/table/toast primitives | Design **React equivalents**, not a component-by-component port |
+| Blazor dialog/form/table/toast/OTP primitives | **Phase 1 baseline implemented**: Dialog, ConfirmDialog, Form/Field, Select, OTP, DataTable, Toast, Button/IconButton, Breadcrumbs; refine feature-specific patterns as needed |
 | Notifications, mobile bottom navigation, advanced appearance picker | Not yet implemented in React |
 | SQL Server provider-specific migrations | Runtime provider hook exists; migrations currently SQLite-specific |
 | OpenAPI-generated strongly typed TypeScript client | Contracts currently updated manually; add deterministic generation + CI drift check |

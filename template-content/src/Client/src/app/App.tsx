@@ -1,11 +1,12 @@
-import { useState } from 'react'
+import { lazy, Suspense, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { LayoutDashboard, CheckCheck, Menu, X, Palette as PaletteIcon, LogIn, LogOut, Moon, Sun, ArrowUpLeft, Github, ShieldCheck, Layers3, Code2 } from 'lucide-react'
+import { LayoutDashboard, CheckCheck, Menu, X, Palette as PaletteIcon, LogIn, LogOut, Moon, Sun, ArrowUpLeft, Github, ShieldCheck, Layers3, Code2, Boxes } from 'lucide-react'
 import { Link, NavLink, Route, Routes, useLocation } from 'react-router-dom'
 import { authApi } from '../features/auth/auth.api'
-import { LoginPage } from '../features/auth/LoginPage'
-import { WorkItemsPage } from '../features/work-items/WorkItemsPage'
-import { UsersPage } from '../features/users/UsersPage'
+const LoginPage = lazy(() => import('../features/auth/LoginPage').then(module => ({ default: module.LoginPage })))
+const WorkItemsPage = lazy(() => import('../features/work-items/WorkItemsPage').then(module => ({ default: module.WorkItemsPage })))
+const UsersPage = lazy(() => import('../features/users/UsersPage').then(module => ({ default: module.UsersPage })))
+const ComponentsPage = lazy(() => import('../features/component-showcase/ComponentsPage').then(module => ({ default: module.ComponentsPage })))
 import { policies } from '../features/users/users.api'
 import { palettes } from '../shared/hooks/useTheme'
 import { useTheme } from '../shared/hooks/useTheme'
@@ -57,6 +58,7 @@ export function App() {
         <span className="nav-section">فضای کار</span>
         <NavLink to="/" end className={({ isActive }) => 'nav-link ' + (isActive ? 'active' : '')} onClick={() => setMenuOpen(false)}><LayoutDashboard size={19}/>داشبورد</NavLink>
         {can(policies.workItemsView) && <NavLink to="/work-items" className={({ isActive }) => 'nav-link ' + (isActive ? 'active' : '')} onClick={() => setMenuOpen(false)}><CheckCheck size={19}/>نمونه مدیریت کارها</NavLink>}
+        <NavLink to="/components" className={({ isActive }) => 'nav-link ' + (isActive ? 'active' : '')} onClick={() => setMenuOpen(false)}><Boxes size={19}/>کامپوننت‌های UI</NavLink>
         {can(policies.usersView) && <NavLink to="/users" className={({ isActive }) => 'nav-link ' + (isActive ? 'active' : '')} onClick={() => setMenuOpen(false)}><ShieldCheck size={19}/>مدیریت کاربران</NavLink>}
       </nav>
       <div className="sidebar-footer"><div className="sidebar-tip"><span className="status-dot"/><span>پایه توسعه آماده است</span></div><span className="version-label">MKX REACT · V0.1</span></div>
@@ -81,15 +83,16 @@ export function App() {
         </div>
       </header>
       <main id="main-content">
-        <Routes>
+        <Suspense fallback={<div className="page" role="status">در حال بارگذاری...</div>}><Routes>
           <Route path="/" element={<HomePage/>}/>
           <Route path="/work-items" element={session.isPending ? <div className="page" role="status">در حال بررسی دسترسی...</div> :
             can(policies.workItemsView) ? <WorkItemsPage canManage={can(policies.workItemsManage)}/> : <AccessDenied authenticated={isAuthenticated}/>}/>
           <Route path="/users" element={session.isPending ? <div className="page" role="status">در حال بررسی دسترسی...</div> :
             can(policies.usersView) ? <UsersPage canManage={can(policies.usersManage)} canManageClaims={can(policies.usersManageClaims)}/> : <AccessDenied authenticated={isAuthenticated}/>}/>
+          <Route path="/components" element={<ComponentsPage/>}/>
           <Route path="/login" element={<LoginPage/>}/>
           <Route path="*" element={<div className="page"><Card><h1>صفحه پیدا نشد</h1><Link to="/">بازگشت به داشبورد</Link></Card></div>}/>
-        </Routes>
+        </Routes></Suspense>
       </main>
       <footer className="app-footer"><span>© Mkx Templates</span><span><Github size={14}/> توسعه‌پذیر و مستقل از UI Library</span></footer>
     </div>
