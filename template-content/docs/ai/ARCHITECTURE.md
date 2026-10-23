@@ -1,0 +1,2 @@
+# Architecture
+React (src/Client) -> /api -> Server -> Application -> Domain; Server -> Infrastructure (EF Core, Identity) -> Domain; Application owns persistence interfaces; Contracts owns DTOs. Browser never references EF or credentials. Development: Vite + Kestrel; production: one ASP.NET Core host serving Vite static output. No SSR or mandatory UI kit. Reference WorkItems vertical slice. SQL Server needs provider-specific migrations; checked-in SQLite migration is not portable.

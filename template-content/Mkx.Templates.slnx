@@ -1,0 +1,21 @@
+<Solution>
+  <Folder Name="/src/" />
+  <Folder Name="/src/Application/">
+    <Project Path="src/Application/Mkx.Templates.Application/Mkx.Templates.Application.csproj" />
+  </Folder>
+  <Folder Name="/src/Contracts/">
+    <Project Path="src/Contracts/Mkx.Templates.Contracts/Mkx.Templates.Contracts.csproj" />
+  </Folder>
+  <Folder Name="/src/Domain/">
+    <Project Path="src/Domain/Mkx.Templates.Domain/Mkx.Templates.Domain.csproj" />
+  </Folder>
+  <Folder Name="/src/Infrastructure/">
+    <Project Path="src/Infrastructure/Mkx.Templates.Infrastructure/Mkx.Templates.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/src/Server/">
+    <Project Path="src/Server/Mkx.Templates.Server/Mkx.Templates.Server.csproj" />
+  </Folder>
+  <Folder Name="/Tests/">
+    <Project Path="Tests/Mkx.Templates.Tests/Mkx.Templates.Tests.csproj" />
+  </Folder>
+</Solution>

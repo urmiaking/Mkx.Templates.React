@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <IsTestProject>true</IsTestProject>
+    <IsPackable>false</IsPackable>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <ProjectReference Include="..\..\src\Domain\Mkx.Templates.Domain\Mkx.Templates.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Server\Mkx.Templates.Server\Mkx.Templates.Server.csproj" />
+    <ProjectReference Include="..\..\src\Application\Mkx.Templates.Application\Mkx.Templates.Application.csproj" />
+  </ItemGroup>
+</Project>

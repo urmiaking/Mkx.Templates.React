@@ -1,0 +1,2 @@
+# Decisions
+One ASP.NET Core deployable with Vite HMR on development; feature-first React; minimal reusable CSS token primitives, no forced shadcn; Domain/Application/Infrastructure boundaries without CQRS framework; same-origin cookies plus CSRF; SQLite migration and optional SQLServer provider hook (separate migrations required); NuGet used as dotnet new source template packaging. React starter does not promise complete Blazor SDK feature parity.

@@ -1,0 +1,23 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <UserSecretsId>Mkx.Templates.React.Starter</UserSecretsId>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Application\Mkx.Templates.Application\Mkx.Templates.Application.csproj" />
+    <ProjectReference Include="..\..\Infrastructure\Mkx.Templates.Infrastructure\Mkx.Templates.Infrastructure.csproj" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all" />
+  </ItemGroup>
+  <Target Name="BuildClientForPublish" BeforeTargets="ComputeFilesToPublish" >
+    <Exec Condition="'$(SkipClientBuild)' != 'true'" Command="npm ci" WorkingDirectory="$(MSBuildProjectDirectory)/../../Client" />
+    <Exec Condition="'$(SkipClientBuild)' != 'true'" Command="npm run build" WorkingDirectory="$(MSBuildProjectDirectory)/../../Client" />
+    <ItemGroup>
+      <ClientDist Include="$(MSBuildProjectDirectory)/../../Client/dist/**" />
+      <ResolvedFileToPublish Include="@(ClientDist->'%(FullPath)')">
+        <RelativePath>wwwroot/%(ClientDist.RecursiveDir)%(ClientDist.Filename)%(ClientDist.Extension)</RelativePath>
+        <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      </ResolvedFileToPublish>
+    </ItemGroup>
+  </Target>
+</Project>

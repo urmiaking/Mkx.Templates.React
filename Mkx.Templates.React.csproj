@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <PackageType>Template</PackageType>
+    <PackageId>Mkx.Templates.React</PackageId>
+    <Version>0.1.0</Version>
+    <Authors>Mkx</Authors>
+    <Title>Mkx React + ASP.NET Core Solution Template</Title>
+    <Description>Agent-first .NET 10 and React TypeScript ASP.NET Core hosted solution template.</Description>
+    <PackageTags>dotnet-new;template;react;typescript;vite;aspnetcore;net10</PackageTags>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <IncludeContentInPack>true</IncludeContentInPack>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <ContentTargetFolders>content</ContentTargetFolders>
+    <NoDefaultExcludes>true</NoDefaultExcludes>
+    <NoWarn>$(NoWarn);NU5110;NU5111;NU5128</NoWarn>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="/" />
+    <Content Include="template-content\**\*" Exclude="template-content\**\bin\**;template-content\**\obj\**;template-content\**\node_modules\**;template-content\**\dist\**;template-content\**\TestResults\**;template-content\**\.vs\**;template-content\**\.git\**;template-content\**\coverage\**;template-content\**\*.tsbuildinfo;template-content\**\*.pfx;template-content\**\*.db;template-content\**\*.db-wal;template-content\**\*.db-shm;template-content\**\*.user;template-content\**\.env;template-content\**\.env.*" PackagePath="content/%(RecursiveDir)%(Filename)%(Extension)" />
+    <Content Include="template-content\.env.example" PackagePath="content/.env.example" />
+    <Compile Remove="**\*" />
+  </ItemGroup>
+</Project>

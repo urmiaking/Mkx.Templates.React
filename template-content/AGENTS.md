@@ -1,0 +1,9 @@
+# Agent Entry Point — Mkx React
+
+Read before editing. Follow explicit user requirements and these repository policies. Relevant guides are under `docs/ai/`: ARCHITECTURE, FEATURE_WORKFLOW, SECURITY, UI and VERIFICATION.
+
+Search for a matching reference feature before introducing a new service, abstraction, route or CSS primitive. Domain owns business invariants; Application owns use cases and interfaces; Infrastructure owns EF Core/Identity persistence; Server owns HTTP security and composition; React owns typed feature-based presentation. Avoid generic repository boilerplate, MediatR, multiple HTTP clients, global state libraries without need, and mandatory UI-kit lock-in.
+
+Never place database access or secrets in React. Enforce API authorization server-side, not only with UI hiding. For cookie-authenticated unsafe `/api` requests send antiforgery tokens. Keep TypeScript strict, remote state in TanStack Query, shared HTTP transport under `src/Client/src/shared/api`, and feature-local components. Maintain RTL, accessibility, focus and reduced-motion behavior.
+
+Update both sides of an API contract together, include domain/API/client tests, update affected docs, and run `./scripts/verify.ps1` before claiming completion. Packaging changes require the root `./scripts/verify-template.ps1`. Never commit generated folders, default admin credentials or secrets.

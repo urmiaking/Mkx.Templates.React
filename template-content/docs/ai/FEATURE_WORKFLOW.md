@@ -1,0 +1,2 @@
+# Feature workflow
+1. Search equivalent WorkItems reference. 2. Implement Domain invariants and Contracts DTOs. 3. Add Application use case/store interface. 4. Add Infrastructure EF mapping/store/migration. 5. Add secured Server minimal endpoint with cancellation, errors and authorization. 6. Add Client/features/<name> API/schema/UI/tests. 7. Use shared HTTP transport/CSRF and TanStack Query. 8. Add xUnit/Vitest, verify full template and update docs. Server validation is required even if client Zod validates.

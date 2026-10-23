@@ -1,0 +1,11 @@
+**/bin
+**/obj
+**/node_modules
+**/dist
+**/TestResults
+**/.vs
+**/.git
+**/.env
+**/*.pfx
+**/app.db
+**/coverage

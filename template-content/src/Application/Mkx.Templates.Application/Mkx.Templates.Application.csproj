@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\..\Domain\Mkx.Templates.Domain\Mkx.Templates.Domain.csproj" />
+    <ProjectReference Include="..\..\Contracts\Mkx.Templates.Contracts\Mkx.Templates.Contracts.csproj" />
+  </ItemGroup>
+</Project>
