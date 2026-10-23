@@ -18,3 +18,9 @@ The /users screen uses a responsive two-pane layout and feature-local users.css.
 The AppBar sticks to the top of document scroll; use normal flow and an appropriate z-index below mobile navigation overlays and modal dialogs. Desktop/mobile heights remain 78/66px. Avoid overflow clipping on its ancestors.
 
 Vazirmatn supports Persian numeral shapes via the OpenType ss01 feature, enabled globally. The reusable OtpField always renders actual Persian Unicode digits while keeping the controlled value/onChange as normalized ASCII for backend consumption. Tests cover pasting Arabic/Persian numerals, display, and ASCII output.
+
+### Bundled Vazirmatn and reliable Farsi digits
+
+The UI uses the complete variable Vazirmatn webfont bundled locally at `src/Client/public/fonts/Vazirmatn.woff2`, with its OFL license in the same directory. The previous Google Fonts CSS served subsetted files that did not render Latin digits using `ss01` consistently. Keep `font-feature-settings: "ss01"` at the root, and use the full bundled font to ensure dashboard numbers, pagination, counters and version strings render with Persian glyphs even when Google Fonts is unavailable.
+
+This is a display-glyph substitution; it intentionally does not mutate API payloads, input identifiers or underlying ASCII numeric values. OTP separately renders Persian Unicode digits while maintaining normalized ASCII state. Do not reintroduce Google Fonts CSS for this face or omit the font from the NuGet template package.

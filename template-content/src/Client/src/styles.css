@@ -1,4 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap');
+/* Complete locally hosted Vazirmatn has ss01 Farsi-digit substitutions; avoid Google Fonts subsets. */
+@font-face { font-family: Vazirmatn; src: url('/fonts/Vazirmatn.woff2') format('woff2'); font-style: normal; font-weight: 100 900; font-display: swap; }
 
 :root {
   font-family: Vazirmatn, Tahoma, sans-serif;

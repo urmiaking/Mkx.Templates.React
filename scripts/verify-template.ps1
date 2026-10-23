@@ -18,7 +18,7 @@ try {
   $zip = [System.IO.Compression.ZipFile]::OpenRead($package.FullName)
   try {
     $names = @($zip.Entries | ForEach-Object FullName)
-    foreach ($needed in @('icon.png','NUGET_README.md','content/.template.config/template.json','content/AGENTS.md','content/src/Client/package-lock.json','content/src/Client/src/main.tsx','content/Mkx.Templates.slnx')) {
+    foreach ($needed in @('icon.png','NUGET_README.md','content/.template.config/template.json','content/AGENTS.md','content/src/Client/package-lock.json','content/src/Client/src/main.tsx','content/src/Client/public/fonts/Vazirmatn.woff2','content/src/Client/public/fonts/OFL.txt','content/Mkx.Templates.slnx')) {
       if ($needed -notin $names) { throw "Missing NuGet content: $needed" }
     }
     $forbidden = $names | Where-Object { $_ -match '/(bin|obj|node_modules|dist|TestResults|coverage|\.git|\.vs)/|/(app.db|\.env|.*\.pfx)$' }
@@ -30,6 +30,8 @@ try {
   if ($LASTEXITCODE -ne 0) { throw 'Template creation failed' }
   if (!(Test-Path "$generated/src/Server/Acme.Workspace.Server/Acme.Workspace.Server.csproj")) { throw 'SourceName replacement failed' }
   if (!(Test-Path "$generated/src/Client/package-lock.json")) { throw 'Generated lockfile missing' }
+  if (!(Test-Path "$generated/src/Client/public/fonts/Vazirmatn.woff2")) { throw 'Generated Persian font missing' }
+  if (!(Test-Path "$generated/src/Client/public/fonts/OFL.txt")) { throw 'Generated font license missing' }
   Push-Location $generated
   try {
     & ./scripts/verify.ps1 -Configuration $Configuration
