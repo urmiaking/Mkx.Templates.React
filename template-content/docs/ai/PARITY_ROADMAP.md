@@ -18,10 +18,12 @@ The two templates are **independent repositories and distribution packages**, bu
 | Role permission editing | Supported | Supported for `Users` (not `Administrators`) |
 | Cookie role security-stamp invalidation on permission changes | Supported | Supported |
 | Sample reference CRUD + concurrent edit detection | Supported | WorkItems sample |
-| RTL workspace, dark/light and four semantic palettes | Supported | Supported (separate UI) |
+| RTL workspace, dark/light and four semantic palettes | Supported | Supported; Blazor-matched tokens and radial animations |
 | Progressive agent documentation and verification | Supported | Supported |
 
 The React backend uses explicitly registered policies rather than Blazor's dynamically provided policy registry. Both fail closed. A React Administrator bypasses individual policy claims through the registered authorization handler. The React session endpoint returns the current cookie's effective policy list; authoritative authorization remains on the Server. Identity security stamps are checked periodically, so role/claim changes may require a fresh login before React navigation catches up.
+
+React also matches Blazor's draggable left-edge palette picker, persisted mobile visibility and independent identity/recovery layout. The two UI runtimes remain separate implementations with equivalent appearance behavior.
 
 ## Important differences and not-yet-implemented parity
 
@@ -31,7 +33,7 @@ The React backend uses explicitly registered policies rather than Blazor's dynam
 | Account profile, password change/recovery, MFA/passkeys, OTP/SMS | React self-service profile, email confirmation, password recovery, authenticator MFA and Identity 10 WebAuthn passkeys implemented; SMS remains |
 | Generic external OIDC sign-in | React supports one optional standards-based provider with explicit Identity account linking; provider-specific integrations are outside the starter |
 | Blazor dialog/form/table/toast/OTP primitives | **Phase 1 baseline implemented**: Dialog, ConfirmDialog, Form/Field, Select, OTP, DataTable, Toast, Button/IconButton, Breadcrumbs; refine feature-specific patterns as needed |
-| Notifications, mobile bottom navigation, advanced appearance picker | Not yet implemented in React |
+| Notifications, mobile bottom navigation | Not yet implemented in React |
 | SQL Server provider-specific migrations | Runtime provider hook exists; migrations currently SQLite-specific |
 | OpenAPI-generated strongly typed TypeScript client | Build-time schema generation, typed WorkItems + user administration + account self-service clients and local/CI drift check implemented; authentication/MFA/passkey response metadata remains |
 | Optional sample feature parameter | React currently includes sample WorkItems by default; optional flag requires tested generation logic |

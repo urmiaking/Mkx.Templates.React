@@ -11,8 +11,9 @@
       try {
         const mode = localStorage.getItem('Theme.Mode') || localStorage.getItem('mkx-appearance')
         const palette = localStorage.getItem('Theme.Palette')
-        if (mode === 'light' || mode === 'dark') document.documentElement.dataset.theme = mode
-        if (['jade', 'ocean', 'iris', 'amber'].includes(palette)) document.documentElement.dataset.palette = palette
+        document.documentElement.dataset.theme = mode === 'light' || mode === 'dark' ? mode :
+          (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+        document.documentElement.dataset.palette = ['jade', 'ocean', 'iris', 'amber'].includes(palette) ? palette : 'jade'
       } catch { /* Private browsing may block storage; defaults remain accessible. */ }
     </script>
 

@@ -1,9 +1,13 @@
 # UI conventions
-Strict TypeScript; feature-local api.ts, schema, components, tests. Use shared/api/http.ts (not fetch in page) and TanStack Query for server state. Shared UI components remain UI-library-neutral; CSS variables provide light/dark tokens; React Router owns navigation. Persian RTL is starter default. Accessible labels, focus-visible, keyboard input, errors and reduced motion are mandatory; test 320px layouts. OpenAPI contract code generation is not implemented; coordinate manual request/response changes across server and client.
+Strict TypeScript; feature-local api.ts, schema, components, tests. Use shared/api/http.ts (not fetch in page) and TanStack Query for server state. Shared UI components remain UI-library-neutral; CSS variables provide light/dark tokens; React Router owns navigation. Persian RTL is starter default. Accessible labels, focus-visible, keyboard input, errors and reduced motion are mandatory; test 320px layouts. OpenAPI contract declarations and typed feature clients are generated from ASP.NET Core metadata. Run `npm run api:generate` after API contract changes and `npm run api:check` to detect drift.
 
 ## Appearance and management
 
-Theme mode and palette are independent persisted preferences (`Theme.Mode` and `Theme.Palette`). Available palettes match the Blazor semantic identifiers: jade, ocean, iris, amber. React uses its own UI primitives, responsive CSS and role-gated `/users` surface. The frontend only hides unavailable actions; the server enforces authorization.
+Theme mode and palette are independent persisted preferences (`Theme.Mode` and `Theme.Palette`). Available palettes match the Blazor semantic identifiers: jade, ocean, iris, amber. The semantic background/surface/text/accent/hover tokens also align with Blazor. `useTheme` owns mode, palette and mobile floating-picker visibility; `ThemeControls.tsx` provides the header mode toggle, draggable left-edge palette picker and sidebar quick swatches. `appearance.css` defines palette tokens and the picker visuals.
+
+User-triggered theme switches use a native View Transition with an 800ms radial reveal from the clicked control: the new dark snapshot expands for dark mode, whereas the old dark snapshot contracts when returning to light mode. Palette changes expand the new snapshot. Reduced-motion preference or absent browser APIs immediately updates without animation. `Theme.PickerPosition` stores the vertical floating-tab position and `Theme.MobilePickerHidden` controls visibility on mobile. The 44px drag control supports pointer/touch and arrow/Home/End keys. Mobile users can always restore it from sidebar quick swatches.
+
+`/login`, `/login/2fa`, `/forgot-password`, `/reset-password` and `/verify-email` render inside `IdentityLayout` with no workspace sidebar, topbar or breadcrumbs. Keep all public identity screens in that independent layout. React uses its own UI primitives, responsive CSS and role-gated `/users` surface. The frontend only hides unavailable actions; the server enforces authorization.
 
 ## Mkx UI primitives (Phase 1)
 

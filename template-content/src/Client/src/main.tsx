@@ -9,6 +9,7 @@ import './styles.css'
 import './features/account/account.css'
 import './features/account/mfa.css'
 import './features/account/passkeys.css'
+import './shared/ui/appearance.css'
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, staleTime: 30_000, refetchOnWindowFocus: false } }
