@@ -67,7 +67,7 @@
 .ui-table-pagination .button{padding:7px 12px;font-size:.76rem}
 .ui-tag{display:inline-flex;align-items:center;border-radius:7px;padding:5px 9px;background:var(--tint);color:var(--primary);font-size:.73rem}
 .ui-number{direction:ltr;display:inline-block;font-variant-numeric:tabular-nums}
-.ui-toaster{position:fixed;z-index:110;inset-block-start:16px;inset-inline-start:16px;display:flex;flex-direction:column;gap:10px;
+.ui-toaster{position:fixed;z-index:110;top:auto;right:auto;bottom:max(16px,env(safe-area-inset-bottom));left:max(16px,env(safe-area-inset-left));display:flex;flex-direction:column;gap:10px;
   width:min(calc(100vw - 32px),370px);pointer-events:none}
 .ui-toast{pointer-events:auto;display:flex;align-items:center;gap:12px;border-radius:13px;background:var(--surface);
   color:var(--text);border:1px solid var(--line);border-inline-start:4px solid var(--primary);

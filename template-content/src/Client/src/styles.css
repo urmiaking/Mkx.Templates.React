@@ -78,9 +78,55 @@ input:focus{border-color:var(--primary);outline:3px solid var(--tint)}
 .mobile-only,.sidebar-backdrop{display:none}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 .motion-enter{animation:rise-in .45s cubic-bezier(.17,.67,.22,1) both}
 @keyframes rise-in{from{opacity:0;transform:translateY(13px)}to{opacity:1;transform:translateY(0)}}
-@media(max-width:1020px){.app-shell{grid-template-columns:1fr}.mobile-only{display:inline-grid}.sidebar{position:fixed;right:0;top:0;bottom:0;transform:translateX(104%);width:265px;transition:transform .25s}.sidebar.sidebar--open{transform:none}.sidebar-backdrop{display:block;position:fixed;inset:0;z-index:20;background:rgba(2,13,19,.54);border:0}.brand .mobile-only{margin-right:auto}.hero{grid-template-columns:1fr}.hero-art{display:none}}
+@media(max-width:1020px){
+  .app-shell{grid-template-columns:1fr}
+  .mobile-only{display:inline-grid}
+  /* Higher specificity preserves transform easing even when appearance.css is loaded afterwards. */
+  .app-shell>.sidebar{
+    position:fixed;right:0;top:0;bottom:0;width:265px;max-width:calc(100vw - 40px);height:100dvh;
+    transform:translate3d(104%,0,0);opacity:.98;visibility:hidden;pointer-events:none;
+    box-shadow:-16px 0 48px #071b2024;will-change:transform;
+    transition:transform .46s cubic-bezier(.22,1,.36,1),opacity .35s ease,
+      visibility 0s linear .46s,background-color .25s ease,border-color .25s ease,color .25s ease;
+  }
+  .app-shell>.sidebar.sidebar--open{
+    transform:translate3d(0,0,0);opacity:1;visibility:visible;pointer-events:auto;
+    transition:transform .46s cubic-bezier(.22,1,.36,1),opacity .35s ease,
+      visibility 0s,background-color .25s ease,border-color .25s ease,color .25s ease;
+  }
+  /* Remain in the DOM so fading OUT is as smooth as fading IN. */
+  .sidebar-backdrop{
+    display:block;position:fixed;inset:0;z-index:20;background:rgba(2,13,19,.54);border:0;
+    opacity:0;visibility:hidden;pointer-events:none;backdrop-filter:blur(0);
+    transition:opacity .34s ease,backdrop-filter .34s ease,visibility 0s linear .34s;
+  }
+  .sidebar-backdrop[data-open="true"]{
+    opacity:1;visibility:visible;pointer-events:auto;backdrop-filter:blur(3px);
+    transition:opacity .34s ease,backdrop-filter .34s ease,visibility 0s;
+  }
+  .sidebar--open .brand,.sidebar--open .nav-items>*{
+    animation:drawer-item-in .42s cubic-bezier(.22,1,.36,1) backwards;
+  }
+  .sidebar--open .nav-items>:nth-child(1){animation-delay:.06s}
+  .sidebar--open .nav-items>:nth-child(2){animation-delay:.09s}
+  .sidebar--open .nav-items>:nth-child(3){animation-delay:.12s}
+  .sidebar--open .nav-items>:nth-child(4){animation-delay:.15s}
+  .sidebar--open .nav-items>:nth-child(5){animation-delay:.18s}
+  .sidebar--open .nav-items>:nth-child(6){animation-delay:.21s}
+  .brand .mobile-only{margin-right:auto}
+  .hero{grid-template-columns:1fr}
+  .hero-art{display:none}
+}
+@keyframes drawer-item-in{
+  from{opacity:0;transform:translateX(12px)}
+  to{opacity:1;transform:translateX(0)}
+}
 @media(max-width:680px){.app-header{height:66px}.page{padding:23px 16px 32px}.hero{padding:26px 21px;min-height:0;border-radius:17px}.hero h1{font-size:1.7rem}.hero-actions .button{flex:1}.feature-grid{grid-template-columns:1fr;gap:11px}.feature-card{min-height:0;padding:21px}.feature-icon{margin-bottom:13px}.home-footer{flex-direction:column;gap:4px}.app-footer{padding:16px}.app-footer span:last-child{display:none}.page-head{align-items:center}.page-head h1{font-size:1.5rem}.count-pill{font-size:.72rem}.content-card{padding:16px}.create-row .button{padding:11px 13px}.task-date{display:none}.work-item{gap:9px}.user-label{max-width:100px}.breadcrumb{font-size:.76rem}}
-@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
+  .app-shell>.sidebar,.app-shell>.sidebar.sidebar--open,.sidebar-backdrop,.sidebar-backdrop[data-open="true"]{transition:none!important}
+  .sidebar--open .brand,.sidebar--open .nav-items>*{animation:none!important}
+}
 
 /* Brand palettes align with the four Blazor semantic appearance options. */
 :root[data-palette="jade"]{--hero-from:#063c43;--hero-mid:#087b72;--hero-to:#13a184}

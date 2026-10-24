@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { LayoutDashboard, CheckCheck, Menu, X, LogIn, LogOut, ArrowUpLeft, Github, ShieldCheck, Layers3, Code2, Boxes, UserRound } from 'lucide-react'
 import { Link, NavLink, Route, Routes, useLocation } from 'react-router-dom'
@@ -51,11 +51,36 @@ export function App() {
   const { mode, palette, setPalette, toggle, mobilePickerHidden, setMobilePickerHidden } = appearance
   const location = useLocation()
   const [menuOpen, setMenuOpen] = useState(false)
+  const menuTriggerRef = useRef<HTMLButtonElement>(null)
+  const menuDismissRef = useRef<HTMLButtonElement>(null)
   const queryClient = useQueryClient()
   const session = useQuery({ queryKey: ['session'], queryFn: authApi.me })
   const logout = useMutation({ mutationFn: authApi.logout, onSuccess: () => queryClient.invalidateQueries({ queryKey: ['session'] }) })
   const isAuthenticated = session.data?.authenticated === true
   const can = (permission: string) => isAuthenticated && (session.data?.permissions?.includes(permission) ?? false)
+
+  useEffect(() => { setMenuOpen(false) }, [location.pathname])
+  useEffect(() => {
+    if (!menuOpen) return
+    const isMobile = window.innerWidth <= 1020
+    const previousOverflow = document.body.style.overflow
+    if (isMobile) {
+      document.body.style.overflow = 'hidden'
+      menuDismissRef.current?.focus()
+    }
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        setMenuOpen(false)
+        menuTriggerRef.current?.focus()
+      }
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.removeEventListener('keydown', onKeyDown)
+      if (isMobile) document.body.style.overflow = previousOverflow
+    }
+  }, [menuOpen])
 
   // Authentication and recovery are full-screen identity routes, never nested
   // inside the authenticated workspace navigation.
@@ -81,8 +106,8 @@ export function App() {
     <PalettePicker palette={palette} setPalette={setPalette} mobilePickerHidden={mobilePickerHidden}
       setMobilePickerHidden={setMobilePickerHidden}/>
     <div className="app-shell">
-    <aside className={'sidebar ' + (menuOpen ? 'sidebar--open' : '')}>
-      <div className="brand"><div className="brand-icon"><Layers3 size={24}/></div><div><strong>Mkx Workspace</strong><small>React Starter</small></div><button className="icon-button mobile-only" onClick={() => setMenuOpen(false)} aria-label="بستن منو"><X size={20}/></button></div>
+    <aside id="workspace-navigation" className={'sidebar ' + (menuOpen ? 'sidebar--open' : '')}>
+      <div className="brand"><div className="brand-icon"><Layers3 size={24}/></div><div><strong>Mkx Workspace</strong><small>React Starter</small></div><button ref={menuDismissRef} type="button" className="icon-button mobile-only" onClick={() => { setMenuOpen(false); menuTriggerRef.current?.focus() }} aria-label="بستن منو"><X size={20}/></button></div>
       <nav aria-label="منوی اصلی" className="nav-items">
         <span className="nav-section">فضای کار</span>
         <NavLink to="/" end className={({ isActive }) => 'nav-link ' + (isActive ? 'active' : '')} onClick={() => setMenuOpen(false)}><LayoutDashboard size={19}/>داشبورد</NavLink>
@@ -95,10 +120,12 @@ export function App() {
         setMobilePickerHidden={setMobilePickerHidden}/>
       <div className="sidebar-footer"><div className="sidebar-tip"><span className="status-dot"/><span>پایه توسعه آماده است</span></div><span className="version-label">MKX REACT · V0.1</span></div>
     </aside>
-    {menuOpen && <button aria-label="بستن منو" className="sidebar-backdrop" onClick={() => setMenuOpen(false)} />}
+    <button type="button" aria-label="بستن منو" aria-hidden={!menuOpen} tabIndex={menuOpen ? 0 : -1}
+      className="sidebar-backdrop" data-open={menuOpen} onClick={() => { setMenuOpen(false); menuTriggerRef.current?.focus() }}/>
     <div className="content-shell">
       <header className="app-header">
-        <div className="header-start"><button className="icon-button mobile-only" aria-label="باز کردن منو" onClick={() => setMenuOpen(true)}><Menu size={22}/></button><span className="breadcrumb">فضای کار <span>/</span> {location.pathname === '/work-items' ? 'مدیریت کارها' : location.pathname === '/users' ? 'مدیریت کاربران' : location.pathname === '/account' ? 'حساب من' : location.pathname === '/components' ? 'کامپوننت‌های UI' : 'داشبورد'}</span></div>
+        <div className="header-start"><button ref={menuTriggerRef} type="button" className="icon-button mobile-only" aria-label="باز کردن منو"
+          aria-controls="workspace-navigation" aria-expanded={menuOpen} onClick={() => setMenuOpen(true)}><Menu size={22}/></button><span className="breadcrumb">فضای کار <span>/</span> {location.pathname === '/work-items' ? 'مدیریت کارها' : location.pathname === '/users' ? 'مدیریت کاربران' : location.pathname === '/account' ? 'حساب من' : location.pathname === '/components' ? 'کامپوننت‌های UI' : 'داشبورد'}</span></div>
         <div className="header-end">
           <ThemeButton mode={mode} toggle={toggle}/>
           {isAuthenticated ? <><Link to="/account" className="user-label" dir="ltr" title="پروفایل من">{session.data?.userName}</Link><button className="icon-button" disabled={logout.isPending} aria-label="خروج" onClick={() => logout.mutate()}><LogOut size={19}/></button></> : <Link className="button button--secondary button--sm" to="/login"><LogIn size={16}/>ورود</Link>}
