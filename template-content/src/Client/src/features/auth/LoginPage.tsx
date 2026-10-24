@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { LockKeyhole, ArrowLeft } from 'lucide-react'
 import { authApi } from './auth.api'
 import { ApiError } from '../../shared/api/http'
@@ -32,6 +32,7 @@ export function LoginPage() {
           {signIn.isPending ? 'در حال ورود...' : 'ورود به سیستم'} <ArrowLeft size={17}/>
         </Button>
       </form>
+      <Link className="account-back-link" to="/forgot-password">رمز عبور را فراموش کرده‌اید؟</Link>
     </Card>
   </div>
 }

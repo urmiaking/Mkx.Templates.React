@@ -1,12 +1,16 @@
 import { lazy, Suspense, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { LayoutDashboard, CheckCheck, Menu, X, Palette as PaletteIcon, LogIn, LogOut, Moon, Sun, ArrowUpLeft, Github, ShieldCheck, Layers3, Code2, Boxes } from 'lucide-react'
+import { LayoutDashboard, CheckCheck, Menu, X, Palette as PaletteIcon, LogIn, LogOut, Moon, Sun, ArrowUpLeft, Github, ShieldCheck, Layers3, Code2, Boxes, UserRound } from 'lucide-react'
 import { Link, NavLink, Route, Routes, useLocation } from 'react-router-dom'
 import { authApi } from '../features/auth/auth.api'
 const LoginPage = lazy(() => import('../features/auth/LoginPage').then(module => ({ default: module.LoginPage })))
 const WorkItemsPage = lazy(() => import('../features/work-items/WorkItemsPage').then(module => ({ default: module.WorkItemsPage })))
 const UsersPage = lazy(() => import('../features/users/UsersPage').then(module => ({ default: module.UsersPage })))
 const ComponentsPage = lazy(() => import('../features/component-showcase/ComponentsPage').then(module => ({ default: module.ComponentsPage })))
+const AccountPage = lazy(() => import('../features/account/AccountPage').then(module => ({ default: module.AccountPage })))
+const ForgotPasswordPage = lazy(() => import('../features/account/RecoveryPages').then(module => ({ default: module.ForgotPasswordPage })))
+const ResetPasswordPage = lazy(() => import('../features/account/RecoveryPages').then(module => ({ default: module.ResetPasswordPage })))
+const VerifyEmailPage = lazy(() => import('../features/account/RecoveryPages').then(module => ({ default: module.VerifyEmailPage })))
 import { policies } from '../features/users/users.api'
 import { palettes } from '../shared/hooks/useTheme'
 import { useTheme } from '../shared/hooks/useTheme'
@@ -59,6 +63,7 @@ export function App() {
         <NavLink to="/" end className={({ isActive }) => 'nav-link ' + (isActive ? 'active' : '')} onClick={() => setMenuOpen(false)}><LayoutDashboard size={19}/>داشبورد</NavLink>
         {can(policies.workItemsView) && <NavLink to="/work-items" className={({ isActive }) => 'nav-link ' + (isActive ? 'active' : '')} onClick={() => setMenuOpen(false)}><CheckCheck size={19}/>نمونه مدیریت کارها</NavLink>}
         <NavLink to="/components" className={({ isActive }) => 'nav-link ' + (isActive ? 'active' : '')} onClick={() => setMenuOpen(false)}><Boxes size={19}/>کامپوننت‌های UI</NavLink>
+        {isAuthenticated && <NavLink to="/account" className={({ isActive }) => 'nav-link ' + (isActive ? 'active' : '')} onClick={() => setMenuOpen(false)}><UserRound size={19}/>حساب من</NavLink>}
         {can(policies.usersView) && <NavLink to="/users" className={({ isActive }) => 'nav-link ' + (isActive ? 'active' : '')} onClick={() => setMenuOpen(false)}><ShieldCheck size={19}/>مدیریت کاربران</NavLink>}
       </nav>
       <div className="sidebar-footer"><div className="sidebar-tip"><span className="status-dot"/><span>پایه توسعه آماده است</span></div><span className="version-label">MKX REACT · V0.1</span></div>
@@ -66,7 +71,7 @@ export function App() {
     {menuOpen && <button aria-label="بستن منو" className="sidebar-backdrop" onClick={() => setMenuOpen(false)} />}
     <div className="content-shell">
       <header className="app-header">
-        <div className="header-start"><button className="icon-button mobile-only" aria-label="باز کردن منو" onClick={() => setMenuOpen(true)}><Menu size={22}/></button><span className="breadcrumb">فضای کار <span>/</span> {location.pathname === '/work-items' ? 'مدیریت کارها' : location.pathname === '/login' ? 'ورود' : location.pathname === '/users' ? 'مدیریت کاربران' : 'داشبورد'}</span></div>
+        <div className="header-start"><button className="icon-button mobile-only" aria-label="باز کردن منو" onClick={() => setMenuOpen(true)}><Menu size={22}/></button><span className="breadcrumb">فضای کار <span>/</span> {location.pathname === '/work-items' ? 'مدیریت کارها' : location.pathname === '/login' ? 'ورود' : location.pathname === '/users' ? 'مدیریت کاربران' : location.pathname === '/account' ? 'حساب من' : location.pathname === '/forgot-password' ? 'بازیابی رمز' : 'داشبورد'}</span></div>
         <div className="header-end">
           <div className="palette-anchor">
             <button className="icon-button palette-trigger" type="button" aria-label="انتخاب پالت رنگ" aria-expanded={paletteOpen}
@@ -79,7 +84,7 @@ export function App() {
               </div></div>}
           </div>
           <button className="icon-button theme-button" aria-label="تغییر تم" onClick={toggle}>{mode === 'dark' ? <Sun size={19}/> : <Moon size={19}/>}</button>
-          {isAuthenticated ? <><span className="user-label" dir="ltr">{session.data?.userName}</span><button className="icon-button" disabled={logout.isPending} aria-label="خروج" onClick={() => logout.mutate()}><LogOut size={19}/></button></> : <Link className="button button--secondary button--sm" to="/login"><LogIn size={16}/>ورود</Link>}
+          {isAuthenticated ? <><Link to="/account" className="user-label" dir="ltr" title="پروفایل من">{session.data?.userName}</Link><button className="icon-button" disabled={logout.isPending} aria-label="خروج" onClick={() => logout.mutate()}><LogOut size={19}/></button></> : <Link className="button button--secondary button--sm" to="/login"><LogIn size={16}/>ورود</Link>}
         </div>
       </header>
       <main id="main-content">
@@ -90,6 +95,10 @@ export function App() {
           <Route path="/users" element={session.isPending ? <div className="page" role="status">در حال بررسی دسترسی...</div> :
             can(policies.usersView) ? <UsersPage canManage={can(policies.usersManage)} canManageClaims={can(policies.usersManageClaims)} currentUserName={session.data?.userName ?? undefined}/> : <AccessDenied authenticated={isAuthenticated}/>}/>
           <Route path="/components" element={<ComponentsPage/>}/>
+          <Route path="/account" element={session.isPending ? <div className="page" role="status">در حال بررسی دسترسی...</div> : isAuthenticated ? <AccountPage/> : <AccessDenied authenticated={false}/>}/>
+          <Route path="/forgot-password" element={<ForgotPasswordPage/>}/>
+          <Route path="/reset-password" element={<ResetPasswordPage/>}/>
+          <Route path="/verify-email" element={<VerifyEmailPage/>}/>
           <Route path="/login" element={<LoginPage/>}/>
           <Route path="*" element={<div className="page"><Card><h1>صفحه پیدا نشد</h1><Link to="/">بازگشت به داشبورد</Link></Card></div>}/>
         </Routes></Suspense>

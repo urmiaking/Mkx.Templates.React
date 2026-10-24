@@ -67,6 +67,10 @@ After first-user bootstrap, the built-in `Administrators` role can manage users 
 
 A public interactive component gallery is available at /components. Accessible Dialog/ConfirmDialog, Form/Field, Select, OTP, DataTable and Toast primitives are built into shared/ui, theme-aware and RTL-ready. See docs/ai/REUSABLE_COMPONENTS.md for API samples and current limitations.
 
+## Account self-service
+
+Signed-in users can manage their own profile and change their password at `/account`. The login screen links to `/forgot-password`; email verification and token-based reset use dedicated React pages. Configure a trusted `AccountEmail:PublicBaseUrl` and SMTP sender for real emails; absent configuration, password recovery never sends a link, and email changes are blocked. Details: `docs/ai/ACCOUNT_SELF_SERVICE.md`.
+
 ## Account access
 
 React uses username/password, independently of email. For isolated local Development, the starter creates an admin/admin demo login; never expose these credentials on a public instance. Production bootstrap remains explicit and requires a strong password.

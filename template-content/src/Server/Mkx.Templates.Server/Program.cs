@@ -10,6 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using Mkx.Templates.Application.WorkItems;
 using Mkx.Templates.Infrastructure.Persistence;
 using Mkx.Templates.Server.Endpoints;
+using Mkx.Templates.Server.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
@@ -24,6 +25,7 @@ builder.Services.AddOpenApi();
 builder.Services.AddHealthChecks();
 builder.Services.AddScoped<WorkItemService>();
 builder.Services.AddScoped<IWorkItemStore, WorkItemStore>();
+builder.Services.AddScoped<IAccountEmailSender, SmtpAccountEmailSender>();
 
 var provider = builder.Configuration["Database:Provider"] ?? "Sqlite";
 var connection = builder.Configuration.GetConnectionString("Default")
@@ -90,6 +92,9 @@ builder.Services.AddRateLimiter(options =>
     options.AddPolicy("login", context => RateLimitPartition.GetFixedWindowLimiter(
         context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
         _ => new FixedWindowRateLimiterOptions { PermitLimit = 8, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
+    options.AddPolicy("account-recovery", context => RateLimitPartition.GetFixedWindowLimiter(
+        context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions { PermitLimit = 8, Window = TimeSpan.FromMinutes(10), QueueLimit = 0 }));
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
 });
 
@@ -197,6 +202,7 @@ app.MapGet("/health/ready", async (AppDbContext db, CancellationToken ct) => (aw
 app.MapGet("/health/live", () => Results.Ok(new { status = "alive" }));
 if (app.Environment.IsDevelopment()) app.MapOpenApi();
 app.MapAuthEndpoints();
+app.MapAccountEndpoints();
 app.MapWorkItemEndpoints();
 app.MapAdministrationEndpoints();
 app.Map("/api/{**path}", () => Results.NotFound());

@@ -14,6 +14,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Mkx.Templates.Contracts;
 using Mkx.Templates.Infrastructure.Persistence;
+using Mkx.Templates.Server.Services;
+using Microsoft.AspNetCore.WebUtilities;
 using Xunit;
 
 namespace Mkx.Templates.Tests;
@@ -348,6 +350,104 @@ public sealed class AuthenticatedCrudTests
         }
     }
 
+    [Fact]
+    public async Task SelfService_RequiresAuthentication_AndSupportsPasswordAndVerifiedRecovery()
+    {
+        var file = Path.Combine(Path.GetTempPath(), $"mkx-account-{Guid.NewGuid():N}.db");
+        var ct = TestContext.Current.CancellationToken;
+        var sender = new RecordingAccountMailer();
+        try
+        {
+            await using var factory = new AppFactory(file, sender: sender);
+            using var client = factory.CreateClient(new WebApplicationFactoryClientOptions { HandleCookies = true });
+            Assert.Equal(HttpStatusCode.Unauthorized,
+                (await client.GetAsync("/api/account/profile", ct)).StatusCode);
+            using (var scope = factory.Services.CreateScope())
+            {
+                var users = scope.ServiceProvider.GetRequiredService<UserManager<AppUser>>();
+                var person = new AppUser { UserName = "member", Email = "member@example.com", EmailConfirmed = false };
+                Assert.True((await users.CreateAsync(person, "Original-Testing-123!")).Succeeded);
+            }
+
+            await UseCsrfAsync(client, ct);
+            Assert.Equal(HttpStatusCode.NoContent,
+                (await client.PostAsJsonAsync("/api/auth/login", new { userName = "member", password = "Original-Testing-123!" }, ct)).StatusCode);
+            await UseCsrfAsync(client, ct);
+            var profile = await client.GetFromJsonAsync<JsonElement>("/api/account/profile", ct);
+            Assert.Equal("member", profile.GetProperty("userName").GetString());
+            Assert.False(profile.GetProperty("emailConfirmed").GetBoolean());
+
+            Assert.Equal(HttpStatusCode.BadRequest,
+                (await client.PostAsJsonAsync("/api/account/password", new {
+                    currentPassword = "bad", newPassword = "Changed-Testing-456!"
+                }, ct)).StatusCode);
+            Assert.Equal(HttpStatusCode.NoContent,
+                (await client.PostAsJsonAsync("/api/account/password", new {
+                    currentPassword = "Original-Testing-123!", newPassword = "Changed-Testing-456!"
+                }, ct)).StatusCode);
+            await UseCsrfAsync(client, ct);
+            Assert.Equal(HttpStatusCode.OK,
+                (await client.PutAsJsonAsync("/api/account/profile", new {
+                    userName = "member-renamed", email = "new-member@example.com"
+                }, ct)).StatusCode);
+            await UseCsrfAsync(client, ct);
+            Assert.Equal(HttpStatusCode.Accepted,
+                (await client.PostAsync("/api/account/verify-email/request", null, ct)).StatusCode);
+            Assert.Single(sender.Messages);
+            var link = new Uri(sender.Messages[0].Body.Split('\n').Last().Trim());
+            var query = QueryHelpers.ParseQuery(link.Query);
+            Assert.Equal(HttpStatusCode.NoContent,
+                (await client.PostAsJsonAsync("/api/account/verify-email",
+                    new { userId = query["userId"].ToString(), token = query["token"].ToString() }, ct)).StatusCode);
+
+            Assert.Equal(HttpStatusCode.Accepted,
+                (await client.PostAsJsonAsync("/api/account/forgot-password",
+                    new { email = "unknown@example.com" }, ct)).StatusCode);
+            Assert.Single(sender.Messages);
+            Assert.Equal(HttpStatusCode.Accepted,
+                (await client.PostAsJsonAsync("/api/account/forgot-password",
+                    new { email = "new-member@example.com" }, ct)).StatusCode);
+            Assert.Equal(2, sender.Messages.Count);
+            var resetLink = new Uri(sender.Messages[1].Body.Split('\n').Last().Trim());
+            var resetQuery = QueryHelpers.ParseQuery(resetLink.Query);
+            Assert.Equal(HttpStatusCode.BadRequest,
+                (await client.PostAsJsonAsync("/api/account/reset-password", new {
+                    email = "new-member@example.com", token = "invalid", newPassword = "Last-Testing-789!"
+                }, ct)).StatusCode);
+            Assert.Equal(HttpStatusCode.NoContent,
+                (await client.PostAsJsonAsync("/api/account/reset-password", new {
+                    email = resetQuery["email"].ToString(),
+                    token = resetQuery["token"].ToString(),
+                    newPassword = "Last-Testing-789!"
+                }, ct)).StatusCode);
+
+            using var fresh = factory.CreateClient(new WebApplicationFactoryClientOptions { HandleCookies = true });
+            await UseCsrfAsync(fresh, ct);
+            Assert.Equal(HttpStatusCode.Unauthorized,
+                (await fresh.PostAsJsonAsync("/api/auth/login",
+                    new { userName = "member-renamed", password = "Changed-Testing-456!" }, ct)).StatusCode);
+            Assert.Equal(HttpStatusCode.NoContent,
+                (await fresh.PostAsJsonAsync("/api/auth/login",
+                    new { userName = "member-renamed", password = "Last-Testing-789!" }, ct)).StatusCode);
+        }
+        finally
+        {
+            SqliteConnection.ClearAllPools();
+            if (File.Exists(file)) File.Delete(file);
+        }
+    }
+
+    private sealed class RecordingAccountMailer : IAccountEmailSender
+    {
+        public bool IsConfigured => true;
+        public List<(string To, string Body)> Messages { get; } = [];
+        public Task SendAsync(string to, string subject, string body, CancellationToken cancellationToken)
+        {
+            Messages.Add((to, body));
+            return Task.CompletedTask;
+        }
+    }
+
     private static async Task UseCsrfAsync(HttpClient client, CancellationToken ct)
     {
         var token = await client.GetFromJsonAsync<TokenResponse>("/api/auth/csrf", ct);
@@ -356,7 +456,7 @@ public sealed class AuthenticatedCrudTests
         client.DefaultRequestHeaders.Add("X-CSRF-TOKEN", token!.Token);
     }
 
-    private sealed class AppFactory(string file, bool enableDemo = false) : WebApplicationFactory<Program>
+    private sealed class AppFactory(string file, bool enableDemo = false, RecordingAccountMailer? sender = null) : WebApplicationFactory<Program>
     {
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
@@ -367,12 +467,18 @@ public sealed class AuthenticatedCrudTests
                     ["Database:Provider"] = "Sqlite",
                     ["Database:ApplyMigrationsOnStartup"] = "true",
                     ["Bootstrap:Enabled"] = "false",
-                    ["Bootstrap:DevelopmentAdmin:Enabled"] = enableDemo ? "true" : "false"
+                    ["Bootstrap:DevelopmentAdmin:Enabled"] = enableDemo ? "true" : "false",
+                    ["AccountEmail:PublicBaseUrl"] = "http://localhost:5173"
                 }));
             builder.ConfigureTestServices(services =>
             {
                 services.RemoveAll<DbContextOptions<AppDbContext>>();
                 services.AddDbContext<AppDbContext>(options => options.UseSqlite("Data Source=" + file));
+                if (sender is not null)
+                {
+                    services.RemoveAll<IAccountEmailSender>();
+                    services.AddSingleton<IAccountEmailSender>(sender);
+                }
             });
         }
     }

@@ -1,0 +1,17 @@
+.account-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;align-items:start}
+.account-card{padding:27px;min-width:0}
+.account-card-heading{display:flex;align-items:center;gap:14px;margin-bottom:24px}
+.account-card-heading h2{font-size:1.05rem;margin-bottom:3px}
+.account-card-heading p{font-size:.78rem;margin:0}
+.account-icon{width:49px;height:49px;display:grid;place-items:center;border-radius:14px;background:var(--tint);color:var(--primary);flex-shrink:0}
+.account-title-icon{color:var(--primary)}
+.account-form{display:flex;flex-direction:column;gap:17px}
+.account-actions{display:flex;gap:10px;justify-content:flex-start;margin-top:3px}
+.email-status{display:flex;align-items:center;gap:10px;margin-top:22px;padding:14px 12px;border:1px solid var(--line);border-radius:11px;color:var(--muted);font-size:.79rem;flex-wrap:wrap}
+.email-status--ok{color:var(--primary);background:var(--tint);border-color:transparent}
+.email-status .button{margin-inline-start:auto}
+.account-recovery form{display:flex;flex-direction:column;gap:18px;margin-top:24px}
+.account-recovery .notice{display:flex;align-items:center;gap:9px;margin:20px 0;font-size:.82rem}
+.account-back-link{display:inline-block;color:var(--primary);font-size:.81rem;font-weight:700;margin-top:22px}
+@media(max-width:1020px){.account-grid{grid-template-columns:1fr}}
+@media(max-width:680px){.account-card{padding:19px}.account-card-heading{align-items:flex-start}.account-actions .button{width:100%}.email-status .button{width:100%;margin:6px 0 0}}
