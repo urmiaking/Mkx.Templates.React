@@ -10,6 +10,7 @@ import { Card } from '../../shared/ui/Card'
 import { Field, Form, TextInput } from '../../shared/ui/Form'
 import { useToast } from '../../shared/ui/useToast'
 import { MfaSettings } from './MfaSettings'
+import { PasskeySettings } from './PasskeySettings'
 
 function ErrorMessage({ error }: { error: unknown }) {
   return error ? <p role="alert" className="error">{error instanceof ApiError && error.status === 503
@@ -115,6 +116,7 @@ export function AccountPage() {
       <ProfileEditor key={profile.data.userName + profile.data.email} initial={profile.data}/>
       <PasswordEditor/>
       <MfaSettings/>
+      <PasskeySettings/>
     </div>
   </div>
 }

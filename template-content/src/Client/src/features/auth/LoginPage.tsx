@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate } from 'react-router-dom'
-import { LockKeyhole, ArrowLeft } from 'lucide-react'
+import { LockKeyhole, ArrowLeft, Fingerprint } from 'lucide-react'
 import { authApi } from './auth.api'
+import { signInWithPasskey, supportsPasskeys } from './passkeys'
 import { ApiError } from '../../shared/api/http'
 import { Button } from '../../shared/ui/Button'
 import { Card } from '../../shared/ui/Card'
@@ -20,6 +21,11 @@ export function LoginPage() {
     }
   })
 
+  const passkeySignIn = useMutation({
+    mutationFn: signInWithPasskey,
+    onSuccess: async () => { await queryClient.invalidateQueries({ queryKey: ['session'] }); navigate('/') }
+  })
+
   return <div className="login-wrap motion-enter">
     <Card className="login-card">
       <div className="feature-icon"><LockKeyhole size={24} /></div>
@@ -35,6 +41,11 @@ export function LoginPage() {
           {signIn.isPending ? 'در حال ورود...' : 'ورود به سیستم'} <ArrowLeft size={17}/>
         </Button>
       </form>
+      <div className="passkey-login-divider">یا</div>
+      <Button variant="secondary" className="full-width" disabled={!supportsPasskeys() || passkeySignIn.isPending || signIn.isPending}
+        onClick={() => passkeySignIn.mutate()}><Fingerprint size={18}/>
+        {passkeySignIn.isPending ? 'در انتظار تأیید دستگاه...' : 'ورود با Passkey'}</Button>
+      {passkeySignIn.isError && <p role="alert" className="error">{passkeySignIn.error instanceof Error ? passkeySignIn.error.message : 'ورود با Passkey انجام نشد.'}</p>}
       <Link className="account-back-link" to="/forgot-password">رمز عبور را فراموش کرده‌اید؟</Link>
     </Card>
   </div>

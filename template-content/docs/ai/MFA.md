@@ -36,4 +36,4 @@ When using `admin/admin` in isolated Development, the original credentials stay 
 
 ## Not included
 
-Passkeys/WebAuthn, external OIDC providers, SMS OTP, trusted-device bypass and organization-wide MFA enforcement are future milestones. For deployments with strong incident response requirements, consider immediate revocation beyond the standard five-minute security-stamp interval.
+Passkeys/WebAuthn are implemented separately as a phishing-resistant **primary** sign-in option (docs/ai/PASSKEYS.md); the built-in Identity passkey flow bypasses TOTP instead of serving as its second factor. External OIDC providers, SMS OTP, trusted-device bypass and organization-wide MFA enforcement remain future milestones. For deployments with strong incident response requirements, consider immediate revocation beyond the standard five-minute security-stamp interval.

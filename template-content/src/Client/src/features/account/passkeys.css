@@ -1,0 +1,15 @@
+.account-passkeys{grid-column:1 / -1}
+.account-passkeys .account-card-heading{margin-bottom:16px}
+.passkey-notice{border-radius:12px;padding:12px 15px;color:var(--muted);background:var(--surface-hover);font-size:.84rem}
+.passkey-list{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:8px}
+.passkey-item{display:flex;align-items:center;gap:13px;padding:12px 13px;border:1px solid var(--line);border-radius:12px;background:var(--surface-hover)}
+.passkey-item-icon{display:grid;place-items:center;width:40px;height:40px;border-radius:12px;color:var(--primary);background:var(--tint);flex-shrink:0}
+.passkey-item-body{flex:1;min-width:0}
+.passkey-item-body strong{font-size:.87rem;display:block;overflow-wrap:anywhere}
+.passkey-item-body small{font-size:.73rem;color:var(--muted);display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:4px}
+.passkey-backed{display:inline-flex;align-items:center;gap:4px;color:var(--primary)}
+.passkey-empty{margin:4px 0 18px;font-size:.84rem}
+.passkey-actions{display:flex;justify-content:flex-start;margin-top:17px}
+@media(max-width:680px){.passkey-item{gap:9px;padding:10px}.passkey-item-icon{height:36px;width:36px}.passkey-actions .button{width:100%;justify-content:center}}
+.passkey-login-divider{display:flex;align-items:center;gap:13px;margin:17px 0 12px;color:var(--muted);font-size:.77rem;text-align:center}
+.passkey-login-divider:before,.passkey-login-divider:after{content:'';flex:1;height:1px;background:var(--line)}

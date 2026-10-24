@@ -42,6 +42,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddIdentityCore<AppUser>(options =>
 {
     options.User.RequireUniqueEmail = true;
+    options.Stores.SchemaVersion = IdentitySchemaVersions.Version3;
     options.Password.RequiredLength = 12;
     options.Lockout.MaxFailedAccessAttempts = 5;
     options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
@@ -50,6 +51,13 @@ builder.Services.AddIdentityCore<AppUser>(options =>
 .AddSignInManager()
 .AddEntityFrameworkStores<AppDbContext>()
 .AddDefaultTokenProviders();
+
+builder.Services.Configure<IdentityPasskeyOptions>(options =>
+{
+    options.UserVerificationRequirement = "required";
+    options.ResidentKeyRequirement = "required";
+    options.ServerDomain = builder.Configuration["Passkeys:ServerDomain"];
+});
 
 builder.Services.AddAuthentication(IdentityConstants.ApplicationScheme)
     .AddCookie(IdentityConstants.ApplicationScheme, options =>
@@ -219,6 +227,7 @@ if (app.Environment.IsDevelopment()) app.MapOpenApi();
 app.MapAuthEndpoints();
 app.MapAccountEndpoints();
 app.MapMfaEndpoints();
+app.MapPasskeyEndpoints();
 app.MapWorkItemEndpoints();
 app.MapAdministrationEndpoints();
 app.Map("/api/{**path}", () => Results.NotFound());

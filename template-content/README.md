@@ -75,6 +75,10 @@ Signed-in users can manage their own profile and change their password at `/acco
 
 At `/account`, authenticated users can enroll a TOTP authenticator with a local QR code and receive ten one-time recovery codes. Subsequent login requires a six-digit code or unused backup code at `/login/2fa`. Regenerating codes and disabling MFA require re-verification. `Mfa:Issuer` customizes the authenticator label. See `docs/ai/MFA.md` for API contracts and security limits.
 
+## Passkeys (WebAuthn)
+
+On `/login`, users with a registered passkey can sign in without typing a username or password using Windows Hello, Touch ID, a security key or a compatible passkey manager. `/account` supports registering, listing and removing passkeys; account changes require the current password. Passkeys use ASP.NET Core Identity 10 with an Identity v3 SQLite migration (`AspNetUserPasskeys`) and require a secure browser context. Set `Passkeys:ServerDomain` and trusted host/forwarded-header validation in Production. A verified passkey is a strong **primary** sign-in factor, not a second TOTP factor; see `docs/ai/PASSKEYS.md`.
+
 ## Account access
 
 React uses username/password, independently of email. For isolated local Development, the starter creates an admin/admin demo login; never expose these credentials on a public instance. Production bootstrap remains explicit and requires a strong password.

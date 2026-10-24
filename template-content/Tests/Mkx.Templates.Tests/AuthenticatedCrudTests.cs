@@ -540,6 +540,81 @@ public sealed class AuthenticatedCrudTests
         }
     }
 
+    [Fact]
+    public async Task Passkeys_RequireReauthentication_AndStayOwnedByCurrentUser()
+    {
+        var file = Path.Combine(Path.GetTempPath(), $"mkx-passkey-{Guid.NewGuid():N}.db");
+        var ct = TestContext.Current.CancellationToken;
+        try
+        {
+            await using var factory = new AppFactory(file);
+            using (var scope = factory.Services.CreateScope())
+            {
+                var users = scope.ServiceProvider.GetRequiredService<UserManager<AppUser>>();
+                var member = new AppUser { UserName = "passkey-member", Email = "pk@example.com", EmailConfirmed = true };
+                var outsider = new AppUser { UserName = "other-member", Email = "other-pk@example.com", EmailConfirmed = true };
+                Assert.True((await users.CreateAsync(member, "Passkey-Testing-Password-123!")).Succeeded);
+                Assert.True((await users.CreateAsync(outsider, "Other-Testing-Password-123!")).Succeeded);
+                // A synthetic stored public credential tests the EF Identity v3
+                // schema and ownership checks; browser WebAuthn signatures remain
+                // validated by the ASP.NET Core Identity passkey handler.
+                var sample = new UserPasskeyInfo([1, 2, 3, 4], [5, 6, 7], DateTimeOffset.UtcNow,
+                    0, [], true, false, false, [], []) { Name = "Laptop" };
+                Assert.True((await users.AddOrUpdatePasskeyAsync(member, sample)).Succeeded);
+            }
+            using var client = factory.CreateClient(new WebApplicationFactoryClientOptions
+                { AllowAutoRedirect = false, HandleCookies = true });
+            Assert.Equal(HttpStatusCode.Unauthorized,
+                (await client.GetAsync("/api/auth/passkeys", ct)).StatusCode);
+            await UseCsrfAsync(client, ct);
+            Assert.Equal(HttpStatusCode.Unauthorized,
+                (await client.PostAsJsonAsync("/api/auth/passkeys/create-options",
+                    new { currentPassword = "Passkey-Testing-Password-123!" }, ct)).StatusCode);
+            var options = await client.PostAsync("/api/auth/passkeys/request-options", null, ct);
+            Assert.Equal(HttpStatusCode.OK, options.StatusCode);
+            Assert.Equal("application/json", options.Content.Headers.ContentType?.MediaType);
+            Assert.False((await client.GetFromJsonAsync<JsonElement>("/api/auth/me", ct))
+                .GetProperty("authenticated").GetBoolean());
+
+            Assert.Equal(HttpStatusCode.NoContent,
+                (await client.PostAsJsonAsync("/api/auth/login",
+                    new { userName = "passkey-member", password = "Passkey-Testing-Password-123!" }, ct)).StatusCode);
+            await UseCsrfAsync(client, ct);
+            var listed = await client.GetFromJsonAsync<PasskeySummary[]>("/api/auth/passkeys", ct);
+            var own = Assert.Single(listed!);
+            Assert.Equal("Laptop", own.Name);
+            Assert.Equal(WebEncoders.Base64UrlEncode([1, 2, 3, 4]), own.CredentialId);
+
+            Assert.Equal(HttpStatusCode.BadRequest,
+                (await client.PostAsJsonAsync("/api/auth/passkeys/create-options",
+                    new { currentPassword = "wrong" }, ct)).StatusCode);
+            var create = await client.PostAsJsonAsync("/api/auth/passkeys/create-options",
+                new { currentPassword = "Passkey-Testing-Password-123!" }, ct);
+            Assert.Equal(HttpStatusCode.OK, create.StatusCode);
+            var creationOptions = await create.Content.ReadFromJsonAsync<JsonElement>(cancellationToken: ct);
+            Assert.True(creationOptions.TryGetProperty("challenge", out _));
+            Assert.Equal(HttpStatusCode.BadRequest,
+                (await client.PostAsJsonAsync("/api/auth/passkeys/register",
+                    new { credentialJson = "{}", name = "Untrusted" }, ct)).StatusCode);
+
+            Assert.Equal(HttpStatusCode.BadRequest,
+                (await client.PostAsJsonAsync("/api/auth/passkeys/remove",
+                    new { credentialId = own.CredentialId, currentPassword = "wrong" }, ct)).StatusCode);
+            Assert.Equal(HttpStatusCode.NotFound,
+                (await client.PostAsJsonAsync("/api/auth/passkeys/remove",
+                    new { credentialId = WebEncoders.Base64UrlEncode([8, 9]), currentPassword = "Passkey-Testing-Password-123!" }, ct)).StatusCode);
+            Assert.Equal(HttpStatusCode.NoContent,
+                (await client.PostAsJsonAsync("/api/auth/passkeys/remove",
+                    new { credentialId = own.CredentialId, currentPassword = "Passkey-Testing-Password-123!" }, ct)).StatusCode);
+            Assert.Empty((await client.GetFromJsonAsync<PasskeySummary[]>("/api/auth/passkeys", ct))!);
+        }
+        finally
+        {
+            SqliteConnection.ClearAllPools();
+            if (File.Exists(file)) File.Delete(file);
+        }
+    }
+
     private static string CurrentTotp(string base32)
     {
         const string alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
