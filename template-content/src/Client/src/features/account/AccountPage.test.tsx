@@ -5,6 +5,7 @@ import { ToastProvider } from '../../shared/ui/ToastProvider'
 import { accountApi } from './account.api'
 import { AccountPage } from './AccountPage'
 
+vi.mock('./mfa.api', () => ({mfaApi:{status:vi.fn(async()=>({enabled:false,recoveryCodesLeft:0}))}}))
 vi.mock('./account.api', () => ({
   accountApi: {
     profile: vi.fn(async () => ({ userName: 'member', email: 'member@example.com', emailConfirmed: false })),

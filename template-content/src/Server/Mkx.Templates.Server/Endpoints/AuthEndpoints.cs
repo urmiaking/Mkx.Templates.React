@@ -7,6 +7,7 @@ using Mkx.Templates.Contracts.Authorization;
 namespace Mkx.Templates.Server.Endpoints;
 
 public sealed record LoginRequest(string UserName, string Password, bool RememberMe = false);
+public sealed record TwoFactorLoginRequest(string Code, bool UseRecoveryCode = false);
 
 public static class AuthEndpoints
 {
@@ -34,8 +35,24 @@ public static class AuthEndpoints
             var user = await users.FindByNameAsync(request.UserName?.Trim() ?? "");
             if (user is null) return Results.Problem(statusCode: 401, title: "Invalid credentials.");
             var result = await signIn.PasswordSignInAsync(user, request.Password ?? "", request.RememberMe, lockoutOnFailure: true);
+            if (result.RequiresTwoFactor) return Results.Accepted("/login/2fa", new { requiresTwoFactor = true });
             return result.Succeeded ? Results.NoContent() : Results.Problem(statusCode: 401, title: "Invalid credentials.");
         }).RequireRateLimiting("login");
+        group.MapPost("/2fa", async (TwoFactorLoginRequest request, SignInManager<AppUser> signIn) =>
+        {
+            if (await signIn.GetTwoFactorAuthenticationUserAsync() is null)
+                return Results.Problem(statusCode: 401, title: "Two-factor sign-in has expired.");
+            if (string.IsNullOrWhiteSpace(request.Code))
+                return Results.Problem(statusCode: 401, title: "Invalid verification code.");
+            var code = new string(request.Code.Trim().Where(c => !char.IsWhiteSpace(c)).Select(c =>
+                c is >= '۰' and <= '۹' ? (char)('0' + c - '۰') :
+                c is >= '٠' and <= '٩' ? (char)('0' + c - '٠') : c).ToArray());
+            var result = request.UseRecoveryCode
+                ? await signIn.TwoFactorRecoveryCodeSignInAsync(code)
+                : await signIn.TwoFactorAuthenticatorSignInAsync(code, isPersistent: false, rememberClient: false);
+            return result.Succeeded ? Results.NoContent() :
+                Results.Problem(statusCode: 401, title: "Invalid verification code.");
+        }).RequireRateLimiting("mfa");
         group.MapPost("/logout", async (SignInManager<AppUser> signIn) =>
         {
             await signIn.SignOutAsync();

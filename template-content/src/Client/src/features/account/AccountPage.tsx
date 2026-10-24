@@ -9,6 +9,7 @@ import { Button } from '../../shared/ui/Button'
 import { Card } from '../../shared/ui/Card'
 import { Field, Form, TextInput } from '../../shared/ui/Form'
 import { useToast } from '../../shared/ui/useToast'
+import { MfaSettings } from './MfaSettings'
 
 function ErrorMessage({ error }: { error: unknown }) {
   return error ? <p role="alert" className="error">{error instanceof ApiError && error.status === 503
@@ -113,6 +114,7 @@ export function AccountPage() {
     <div className="account-grid">
       <ProfileEditor key={profile.data.userName + profile.data.email} initial={profile.data}/>
       <PasswordEditor/>
+      <MfaSettings/>
     </div>
   </div>
 }

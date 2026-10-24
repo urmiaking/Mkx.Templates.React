@@ -71,6 +71,10 @@ A public interactive component gallery is available at /components. Accessible D
 
 Signed-in users can manage their own profile and change their password at `/account`. The login screen links to `/forgot-password`; email verification and token-based reset use dedicated React pages. Configure a trusted `AccountEmail:PublicBaseUrl` and SMTP sender for real emails; absent configuration, password recovery never sends a link, and email changes are blocked. Details: `docs/ai/ACCOUNT_SELF_SERVICE.md`.
 
+## Authenticator MFA
+
+At `/account`, authenticated users can enroll a TOTP authenticator with a local QR code and receive ten one-time recovery codes. Subsequent login requires a six-digit code or unused backup code at `/login/2fa`. Regenerating codes and disabling MFA require re-verification. `Mfa:Issuer` customizes the authenticator label. See `docs/ai/MFA.md` for API contracts and security limits.
+
 ## Account access
 
 React uses username/password, independently of email. For isolated local Development, the starter creates an admin/admin demo login; never expose these credentials on a public instance. Production bootstrap remains explicit and requires a strong password.

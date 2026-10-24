@@ -18,7 +18,7 @@ For UI work read docs/ai/REUSABLE_COMPONENTS.md first. Prefer shared/ui primitiv
 
 ## Account management contract
 
-For user lifecycle changes read docs/ai/USER_ADMINISTRATION.md. For self-service account/password recovery changes read docs/ai/ACCOUNT_SELF_SERVICE.md. Protect Administrators and caller account on the server, prohibit elevation via generic roles endpoint, keep policy authorization and CSRF, and test the API and UI together.
+For user lifecycle changes read docs/ai/USER_ADMINISTRATION.md. For self-service account/password recovery changes read docs/ai/ACCOUNT_SELF_SERVICE.md. For authenticator MFA changes read docs/ai/MFA.md. Protect Administrators and caller account on the server, prohibit elevation via generic roles endpoint, keep policy authorization and CSRF, and test the API and UI together.
 
 ## Authentication and account UI
 

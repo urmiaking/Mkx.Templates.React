@@ -14,7 +14,10 @@ export function LoginPage() {
   const navigate = useNavigate()
   const signIn = useMutation({
     mutationFn: () => authApi.login(userName, password),
-    onSuccess: async () => { await queryClient.invalidateQueries({ queryKey: ['session'] }); navigate('/') }
+    onSuccess: async result => {
+      if (result?.requiresTwoFactor) { navigate('/login/2fa'); return }
+      await queryClient.invalidateQueries({ queryKey: ['session'] }); navigate('/')
+    }
   })
 
   return <div className="login-wrap motion-enter">

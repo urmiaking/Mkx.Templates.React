@@ -10,6 +10,7 @@ const ComponentsPage = lazy(() => import('../features/component-showcase/Compone
 const AccountPage = lazy(() => import('../features/account/AccountPage').then(module => ({ default: module.AccountPage })))
 const ForgotPasswordPage = lazy(() => import('../features/account/RecoveryPages').then(module => ({ default: module.ForgotPasswordPage })))
 const ResetPasswordPage = lazy(() => import('../features/account/RecoveryPages').then(module => ({ default: module.ResetPasswordPage })))
+const TwoFactorPage = lazy(() => import('../features/auth/TwoFactorPage').then(module => ({ default: module.TwoFactorPage })))
 const VerifyEmailPage = lazy(() => import('../features/account/RecoveryPages').then(module => ({ default: module.VerifyEmailPage })))
 import { policies } from '../features/users/users.api'
 import { palettes } from '../shared/hooks/useTheme'
@@ -71,7 +72,7 @@ export function App() {
     {menuOpen && <button aria-label="بستن منو" className="sidebar-backdrop" onClick={() => setMenuOpen(false)} />}
     <div className="content-shell">
       <header className="app-header">
-        <div className="header-start"><button className="icon-button mobile-only" aria-label="باز کردن منو" onClick={() => setMenuOpen(true)}><Menu size={22}/></button><span className="breadcrumb">فضای کار <span>/</span> {location.pathname === '/work-items' ? 'مدیریت کارها' : location.pathname === '/login' ? 'ورود' : location.pathname === '/users' ? 'مدیریت کاربران' : location.pathname === '/account' ? 'حساب من' : location.pathname === '/forgot-password' ? 'بازیابی رمز' : 'داشبورد'}</span></div>
+        <div className="header-start"><button className="icon-button mobile-only" aria-label="باز کردن منو" onClick={() => setMenuOpen(true)}><Menu size={22}/></button><span className="breadcrumb">فضای کار <span>/</span> {location.pathname === '/work-items' ? 'مدیریت کارها' : location.pathname === '/login' ? 'ورود' : location.pathname === '/users' ? 'مدیریت کاربران' : location.pathname === '/account' ? 'حساب من' : location.pathname === '/forgot-password' ? 'بازیابی رمز' : location.pathname === '/login/2fa' ? 'تأیید دومرحله‌ای' : 'داشبورد'}</span></div>
         <div className="header-end">
           <div className="palette-anchor">
             <button className="icon-button palette-trigger" type="button" aria-label="انتخاب پالت رنگ" aria-expanded={paletteOpen}
@@ -100,6 +101,7 @@ export function App() {
           <Route path="/reset-password" element={<ResetPasswordPage/>}/>
           <Route path="/verify-email" element={<VerifyEmailPage/>}/>
           <Route path="/login" element={<LoginPage/>}/>
+          <Route path="/login/2fa" element={<TwoFactorPage/>}/>
           <Route path="*" element={<div className="page"><Card><h1>صفحه پیدا نشد</h1><Link to="/">بازگشت به داشبورد</Link></Card></div>}/>
         </Routes></Suspense>
       </main>

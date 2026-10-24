@@ -47,7 +47,7 @@ export function OtpField({value, onChange, length = 6, disabled, label = 'کد �
       onPaste={event => paste(event,index)}
       onKeyDown={event => onKey(event,index)}
       aria-label={`رقم ${index+1} از ${length}`}
-      type="text" inputMode="numeric" pattern="[0-9]*"
+      type="text" inputMode="numeric"
       autoComplete={index===0?'one-time-code':'off'}
       maxLength={length} disabled={disabled} autoFocus={autoFocus && index===0}
     />)}

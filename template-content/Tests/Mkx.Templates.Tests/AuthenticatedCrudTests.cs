@@ -1,4 +1,7 @@
 using System.Text.Json;
+using System.Buffers.Binary;
+using System.Security.Cryptography;
+using Mkx.Templates.Server.Endpoints;
 using System.Net;
 using System.Security.Claims;
 using Mkx.Templates.Contracts.Authorization;
@@ -446,6 +449,123 @@ public sealed class AuthenticatedCrudTests
             Messages.Add((to, body));
             return Task.CompletedTask;
         }
+    }
+
+    [Fact]
+    public async Task AuthenticatorMfa_RequiresPasswordAndCode_AndRecoveryCodesWorkOnce()
+    {
+        var file = Path.Combine(Path.GetTempPath(), $"mkx-mfa-{Guid.NewGuid():N}.db");
+        var ct = TestContext.Current.CancellationToken;
+        try
+        {
+            await using var factory = new AppFactory(file);
+            using (var scope = factory.Services.CreateScope())
+            {
+                var users = scope.ServiceProvider.GetRequiredService<UserManager<AppUser>>();
+                var member = new AppUser { UserName = "mfa-member", Email = "mfa@example.com", EmailConfirmed = true };
+                Assert.True((await users.CreateAsync(member, "Mfa-Testing-Password-123!")).Succeeded);
+            }
+            using var client = factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false, HandleCookies = true });
+            Assert.Equal(HttpStatusCode.Unauthorized, (await client.GetAsync("/api/account/mfa/status", ct)).StatusCode);
+            await UseCsrfAsync(client, ct);
+            Assert.Equal(HttpStatusCode.NoContent, (await client.PostAsJsonAsync("/api/auth/login",
+                new { userName = "mfa-member", password = "Mfa-Testing-Password-123!" }, ct)).StatusCode);
+            await UseCsrfAsync(client, ct);
+
+            Assert.Equal(HttpStatusCode.BadRequest, (await client.PostAsJsonAsync("/api/account/mfa/setup",
+                new { currentPassword = "incorrect" }, ct)).StatusCode);
+            var setupResponse = await client.PostAsJsonAsync("/api/account/mfa/setup",
+                new { currentPassword = "Mfa-Testing-Password-123!" }, ct);
+            Assert.Equal(HttpStatusCode.OK, setupResponse.StatusCode);
+            var setup = await setupResponse.Content.ReadFromJsonAsync<MfaSetup>(cancellationToken: ct);
+            Assert.NotNull(setup);
+            Assert.StartsWith("otpauth://totp/", setup.AuthenticatorUri);
+            var token = CurrentTotp(setup.SharedKey);
+            Assert.Equal(HttpStatusCode.BadRequest, (await client.PostAsJsonAsync("/api/account/mfa/enable",
+                new { currentPassword = "incorrect", code = token }, ct)).StatusCode);
+            var enabledResponse = await client.PostAsJsonAsync("/api/account/mfa/enable",
+                new { currentPassword = "Mfa-Testing-Password-123!", code = token }, ct);
+            Assert.Equal(HttpStatusCode.OK, enabledResponse.StatusCode);
+            var enabled = await enabledResponse.Content.ReadFromJsonAsync<MfaRecoveryCodes>(cancellationToken: ct);
+            Assert.NotNull(enabled);
+            Assert.Equal(10, enabled.Codes.Length);
+            var status = await client.GetFromJsonAsync<MfaStatus>("/api/account/mfa/status", ct);
+            Assert.True(status!.Enabled);
+            Assert.Equal(10, status.RecoveryCodesLeft);
+
+            Assert.Equal(HttpStatusCode.NoContent, (await client.PostAsync("/api/auth/logout", null, ct)).StatusCode);
+            await UseCsrfAsync(client, ct);
+            var login = await client.PostAsJsonAsync("/api/auth/login", new {
+                userName = "mfa-member", password = "Mfa-Testing-Password-123!"
+            }, ct);
+            Assert.Equal(HttpStatusCode.Accepted, login.StatusCode);
+            Assert.Equal(HttpStatusCode.Unauthorized, (await client.GetAsync("/api/account/mfa/status", ct)).StatusCode);
+            Assert.Equal(HttpStatusCode.Unauthorized, (await client.PostAsJsonAsync("/api/auth/2fa",
+                new { code = "000000" }, ct)).StatusCode);
+            Assert.Equal(HttpStatusCode.NoContent, (await client.PostAsJsonAsync("/api/auth/2fa",
+                new { code = CurrentTotp(setup.SharedKey) }, ct)).StatusCode);
+            Assert.True((await client.GetFromJsonAsync<MfaStatus>("/api/account/mfa/status", ct))!.Enabled);
+            await UseCsrfAsync(client, ct);
+            Assert.Equal(HttpStatusCode.NoContent, (await client.PostAsync("/api/auth/logout", null, ct)).StatusCode);
+            await UseCsrfAsync(client, ct);
+            Assert.Equal(HttpStatusCode.Accepted, (await client.PostAsJsonAsync("/api/auth/login",
+                new { userName = "mfa-member", password = "Mfa-Testing-Password-123!" }, ct)).StatusCode);
+            Assert.Equal(HttpStatusCode.NoContent, (await client.PostAsJsonAsync("/api/auth/2fa",
+                new { code = enabled.Codes[0], useRecoveryCode = true }, ct)).StatusCode);
+            var afterRecovery = await client.GetFromJsonAsync<MfaStatus>("/api/account/mfa/status", ct);
+            Assert.Equal(9, afterRecovery!.RecoveryCodesLeft);
+
+            await UseCsrfAsync(client, ct);
+            var replacedResponse = await client.PostAsJsonAsync("/api/account/mfa/recovery-codes",
+                new { currentPassword = "Mfa-Testing-Password-123!", code = CurrentTotp(setup.SharedKey) }, ct);
+            Assert.Equal(HttpStatusCode.OK, replacedResponse.StatusCode);
+            var replacement = await replacedResponse.Content.ReadFromJsonAsync<MfaRecoveryCodes>(cancellationToken: ct);
+            Assert.NotNull(replacement);
+            Assert.Equal(10, replacement.Codes.Length);
+            Assert.DoesNotContain(enabled.Codes[0], replacement.Codes);
+            Assert.Equal(HttpStatusCode.NoContent, (await client.PostAsJsonAsync("/api/account/mfa/disable",
+                new { currentPassword = "Mfa-Testing-Password-123!", code = CurrentTotp(setup.SharedKey) }, ct)).StatusCode);
+            Assert.False((await client.GetFromJsonAsync<MfaStatus>("/api/account/mfa/status", ct))!.Enabled);
+            await UseCsrfAsync(client, ct);
+            Assert.Equal(HttpStatusCode.NoContent, (await client.PostAsync("/api/auth/logout", null, ct)).StatusCode);
+            await UseCsrfAsync(client, ct);
+            Assert.Equal(HttpStatusCode.NoContent, (await client.PostAsJsonAsync("/api/auth/login", new {
+                userName = "mfa-member", password = "Mfa-Testing-Password-123!"
+            }, ct)).StatusCode);
+        }
+        finally
+        {
+            SqliteConnection.ClearAllPools();
+            if (File.Exists(file)) File.Delete(file);
+        }
+    }
+
+    private static string CurrentTotp(string base32)
+    {
+        const string alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+        var secret = new List<byte>();
+        var buffer = 0;
+        var bits = 0;
+        foreach (var digit in base32.TrimEnd('=').ToUpperInvariant())
+        {
+            var value = alphabet.IndexOf(digit);
+            if (value < 0) throw new FormatException("Invalid authenticator secret.");
+            buffer = (buffer << 5) | value;
+            bits += 5;
+            if (bits >= 8)
+            {
+                bits -= 8;
+                secret.Add((byte)(buffer >> bits));
+                buffer &= (1 << bits) - 1;
+            }
+        }
+        Span<byte> step = stackalloc byte[8];
+        BinaryPrimitives.WriteInt64BigEndian(step, DateTimeOffset.UtcNow.ToUnixTimeSeconds() / 30);
+        var hash = HMACSHA1.HashData(secret.ToArray(), step);
+        var offset = hash[^1] & 15;
+        var number = ((hash[offset] & 127) << 24) | (hash[offset + 1] << 16) |
+            (hash[offset + 2] << 8) | hash[offset + 3];
+        return (number % 1_000_000).ToString("D6", System.Globalization.CultureInfo.InvariantCulture);
     }
 
     private static async Task UseCsrfAsync(HttpClient client, CancellationToken ct)

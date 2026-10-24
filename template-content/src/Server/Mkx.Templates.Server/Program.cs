@@ -78,6 +78,15 @@ builder.Services.AddAuthentication(IdentityConstants.ApplicationScheme)
             context.Response.Redirect(context.RedirectUri);
             return Task.CompletedTask;
         };
+    })
+    .AddCookie(IdentityConstants.TwoFactorUserIdScheme, options =>
+    {
+        options.Cookie.HttpOnly = true;
+        options.Cookie.SameSite = SameSiteMode.Strict;
+        options.Cookie.SecurePolicy = builder.Environment.IsDevelopment() ? CookieSecurePolicy.SameAsRequest : CookieSecurePolicy.Always;
+        options.Cookie.Path = "/api/auth";
+        options.ExpireTimeSpan = TimeSpan.FromMinutes(5);
+        options.SlidingExpiration = false;
     });
 builder.Services.AddSingleton<IAuthorizationHandler, PermissionHandler>();
 builder.Services.AddAuthorization(options => options.AddAppPolicies());
@@ -95,6 +104,9 @@ builder.Services.AddRateLimiter(options =>
     options.AddPolicy("account-recovery", context => RateLimitPartition.GetFixedWindowLimiter(
         context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
         _ => new FixedWindowRateLimiterOptions { PermitLimit = 8, Window = TimeSpan.FromMinutes(10), QueueLimit = 0 }));
+    options.AddPolicy("mfa", context => RateLimitPartition.GetFixedWindowLimiter(
+        context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions { PermitLimit = 10, Window = TimeSpan.FromMinutes(10), QueueLimit = 0 }));
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
 });
 
@@ -167,9 +179,12 @@ app.UseExceptionHandler();
 app.Use(async (context, next) =>
 {
     context.Response.Headers.XContentTypeOptions = "nosniff";
-    context.Response.Headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
+    context.Response.Headers["Referrer-Policy"] =
+        context.Request.Path.StartsWithSegments("/reset-password") ||
+        context.Request.Path.StartsWithSegments("/verify-email") ? "no-referrer" : "strict-origin-when-cross-origin";
     if (context.Request.Path.StartsWithSegments("/api/auth") ||
-        context.Request.Path.StartsWithSegments("/api/admin"))
+        context.Request.Path.StartsWithSegments("/api/admin") ||
+        context.Request.Path.StartsWithSegments("/api/account"))
         context.Response.Headers.CacheControl = "no-store";
     await next();
 });
@@ -203,6 +218,7 @@ app.MapGet("/health/live", () => Results.Ok(new { status = "alive" }));
 if (app.Environment.IsDevelopment()) app.MapOpenApi();
 app.MapAuthEndpoints();
 app.MapAccountEndpoints();
+app.MapMfaEndpoints();
 app.MapWorkItemEndpoints();
 app.MapAdministrationEndpoints();
 app.Map("/api/{**path}", () => Results.NotFound());
