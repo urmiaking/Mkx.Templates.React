@@ -40,7 +40,7 @@ AccountEmail__Password=<secret>
 
 ## Security and limitations
 
-The Production template never provisions demo credentials; Development keeps the intentionally weak `admin/admin` local demo unchanged. Existing sessions are checked against security stamps on the configured five-minute interval; an incident-response system requiring immediate global revocation needs additional session infrastructure. A production deployment should protect recovery pages from referrer leaks and ensure SMTP and publicly configured origin are reachable. There is no MFA, passkey, or external OIDC implementation in this milestone.
+The Production template never provisions demo credentials; Development keeps the intentionally weak `admin/admin` local demo unchanged. Existing sessions are checked against security stamps on the configured five-minute interval; an incident-response system requiring immediate global revocation needs additional session infrastructure. A production deployment should protect recovery pages from referrer leaks and ensure SMTP and publicly configured origin are reachable. MFA, passkeys and generic external OIDC are available as separate opt-in/independent modules; see docs/ai/MFA.md, docs/ai/PASSKEYS.md and docs/ai/EXTERNAL_OIDC.md.
 
 ## Verification
 

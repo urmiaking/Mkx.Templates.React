@@ -29,7 +29,7 @@ The React backend uses explicitly registered policies rather than Blazor's dynam
 | --- | --- |
 | Full user edit/delete, role membership editor and account protection | React now has guarded member account editing, deletion, lock/unlock, Users membership and permission updates; advanced role management remains separate |
 | Account profile, password change/recovery, MFA/passkeys, OTP/SMS | React self-service profile, email confirmation, password recovery, authenticator MFA and Identity 10 WebAuthn passkeys implemented; SMS remains |
-| External OIDC/BirSign sign-in | Not yet ported to React |
+| Generic external OIDC sign-in | React supports one optional standards-based provider with explicit Identity account linking; provider-specific integrations are outside the starter |
 | Blazor dialog/form/table/toast/OTP primitives | **Phase 1 baseline implemented**: Dialog, ConfirmDialog, Form/Field, Select, OTP, DataTable, Toast, Button/IconButton, Breadcrumbs; refine feature-specific patterns as needed |
 | Notifications, mobile bottom navigation, advanced appearance picker | Not yet implemented in React |
 | SQL Server provider-specific migrations | Runtime provider hook exists; migrations currently SQLite-specific |
@@ -50,7 +50,7 @@ Each granted capability is an Identity claim whose **Claim.Type** equals the pol
 
 ## Next milestone
 
-Reusable UI primitives, guarded account administration, profile editing, email verification and password recovery are implemented. Next: external OIDC and OpenAPI-generated TypeScript contracts; then broader account security and UI parity before multiplying business features. For each milestone, keep the independent Blazor code untouched unless an explicitly approved shared-contract change is necessary.
+Reusable UI primitives, guarded account administration, profile editing, email verification and password recovery are implemented. Next: OpenAPI-generated TypeScript contracts; then broader account security and UI parity before multiplying business features. For each milestone, keep the independent Blazor code untouched unless an explicitly approved shared-contract change is necessary.
 
 ## Username parity
 

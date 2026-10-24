@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+<Project Sdk="Microsoft.NET.Sdk.Web">
   <PropertyGroup>
     <UserSecretsId>Mkx.Templates.React.Starter</UserSecretsId>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
@@ -7,6 +7,7 @@
     <ProjectReference Include="..\..\Application\Mkx.Templates.Application\Mkx.Templates.Application.csproj" />
     <ProjectReference Include="..\..\Infrastructure\Mkx.Templates.Infrastructure\Mkx.Templates.Infrastructure.csproj" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all" />
   </ItemGroup>
   <Target Name="BuildClientForPublish" BeforeTargets="ComputeFilesToPublish" >

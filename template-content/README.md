@@ -79,6 +79,10 @@ At `/account`, authenticated users can enroll a TOTP authenticator with a local 
 
 On `/login`, users with a registered passkey can sign in without typing a username or password using Windows Hello, Touch ID, a security key or a compatible passkey manager. `/account` supports registering, listing and removing passkeys; account changes require the current password. Passkeys use ASP.NET Core Identity 10 with an Identity v3 SQLite migration (`AspNetUserPasskeys`) and require a secure browser context. Set `Passkeys:ServerDomain` and trusted host/forwarded-header validation in Production. A verified passkey is a strong **primary** sign-in factor, not a second TOTP factor; see `docs/ai/PASSKEYS.md`.
 
+## Optional external OIDC
+
+A standards-based OIDC provider can be enabled with `ExternalOidc:Enabled`, `Authority`, `ClientId` and `ClientSecret`. The login screen then offers an external sign-in button; users explicitly link their local Identity account to the external subject on `/account` after verifying their local password. External email and role claims never auto-link users or grant permissions. See `docs/ai/EXTERNAL_OIDC.md` for settings, redirect URL and production security details.
+
 ## Account access
 
 React uses username/password, independently of email. For isolated local Development, the starter creates an admin/admin demo login; never expose these credentials on a public instance. Production bootstrap remains explicit and requires a strong password.

@@ -38,7 +38,7 @@ The backend's `AuthenticatedCrudTests.AccountLifecycle_ProtectsAdministratorsAnd
 
 ## Not yet implemented
 
-External OIDC, audit event persistence, bulk account import, advanced multi-role administration, email notifications and bulk selection. Own-account passkey management is available separately under `/account`; see docs/ai/PASSKEYS.md. These require separate milestones and must not be claimed as delivered by this user-administration milestone.
+Audit event persistence, bulk account import, advanced multi-role administration, email notifications and bulk selection. Own-account passkey and optional external OIDC management are available separately under `/account`; see docs/ai/PASSKEYS.md and docs/ai/EXTERNAL_OIDC.md. These require separate milestones and must not be claimed as delivered by this user-administration milestone.
 
 ## Independent usernames
 

@@ -1,4 +1,6 @@
 using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using System.Net;
 using Microsoft.AspNetCore.Authorization;
 using Mkx.Templates.Contracts.Authorization;
@@ -95,7 +97,51 @@ builder.Services.AddAuthentication(IdentityConstants.ApplicationScheme)
         options.Cookie.Path = "/api/auth";
         options.ExpireTimeSpan = TimeSpan.FromMinutes(5);
         options.SlidingExpiration = false;
+    })
+    .AddCookie(IdentityConstants.ExternalScheme, options =>
+    {
+        options.Cookie.HttpOnly = true;
+        options.Cookie.SameSite = SameSiteMode.Lax;
+        options.Cookie.SecurePolicy = builder.Environment.IsDevelopment() ? CookieSecurePolicy.SameAsRequest : CookieSecurePolicy.Always;
+        options.Cookie.Path = "/api/auth/external";
+        options.ExpireTimeSpan = TimeSpan.FromMinutes(5);
+        options.SlidingExpiration = false;
     });
+
+// OIDC is entirely opt-in. An external subject becomes a local Identity login
+// only after a signed-in user explicitly links it with password reauthentication.
+if (builder.Configuration.GetValue<bool>("ExternalOidc:Enabled"))
+{
+    var authority = builder.Configuration["ExternalOidc:Authority"];
+    var clientId = builder.Configuration["ExternalOidc:ClientId"];
+    var secret = builder.Configuration["ExternalOidc:ClientSecret"];
+    if (!Uri.TryCreate(authority, UriKind.Absolute, out var issuer) ||
+        (issuer.Scheme != Uri.UriSchemeHttps && !(builder.Environment.IsDevelopment() && issuer.Scheme == Uri.UriSchemeHttp)) ||
+        string.IsNullOrWhiteSpace(clientId) || string.IsNullOrWhiteSpace(secret))
+        throw new InvalidOperationException("ExternalOidc is enabled but Authority, ClientId or ClientSecret is missing or invalid.");
+    builder.Services.AddAuthentication().AddOpenIdConnect(ExternalOidcEndpoints.Scheme, options =>
+    {
+        options.Authority = authority;
+        options.ClientId = clientId;
+        options.ClientSecret = secret;
+        options.SignInScheme = IdentityConstants.ExternalScheme;
+        options.CallbackPath = "/signin-oidc";
+        options.ResponseType = OpenIdConnectResponseType.Code;
+        options.UsePkce = true;
+        options.RequireHttpsMetadata = !builder.Environment.IsDevelopment();
+        options.SaveTokens = false;
+        options.GetClaimsFromUserInfoEndpoint = false;
+        options.Events = new OpenIdConnectEvents
+        {
+            OnRemoteFailure = context =>
+            {
+                context.HandleResponse();
+                context.Response.Redirect("/login?externalError=failed");
+                return Task.CompletedTask;
+            }
+        };
+    });
+}
 builder.Services.AddSingleton<IAuthorizationHandler, PermissionHandler>();
 builder.Services.AddAuthorization(options => options.AddAppPolicies());
 builder.Services.Configure<SecurityStampValidatorOptions>(options => options.ValidationInterval = TimeSpan.FromMinutes(5));
@@ -228,6 +274,7 @@ app.MapAuthEndpoints();
 app.MapAccountEndpoints();
 app.MapMfaEndpoints();
 app.MapPasskeyEndpoints();
+app.MapExternalOidcEndpoints();
 app.MapWorkItemEndpoints();
 app.MapAdministrationEndpoints();
 app.Map("/api/{**path}", () => Results.NotFound());

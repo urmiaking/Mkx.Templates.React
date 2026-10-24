@@ -6,6 +6,7 @@ import { accountApi } from './account.api'
 import { AccountPage } from './AccountPage'
 
 vi.mock('./PasskeySettings', () => ({ PasskeySettings: () => <div>Passkeys</div> }))
+vi.mock('./ExternalAccountSettings', () => ({ ExternalAccountSettings: () => null }))
 vi.mock('./mfa.api', () => ({mfaApi:{status:vi.fn(async()=>({enabled:false,recoveryCodesLeft:0}))}}))
 vi.mock('./account.api', () => ({
   accountApi: {

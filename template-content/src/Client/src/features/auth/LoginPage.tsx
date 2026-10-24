@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Link, useNavigate } from 'react-router-dom'
-import { LockKeyhole, ArrowLeft, Fingerprint } from 'lucide-react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { LockKeyhole, ArrowLeft, Fingerprint, Building2 } from 'lucide-react'
 import { authApi } from './auth.api'
+import { externalOidcApi } from './externalOidc.api'
 import { signInWithPasskey, supportsPasskeys } from './passkeys'
 import { ApiError } from '../../shared/api/http'
 import { Button } from '../../shared/ui/Button'
@@ -13,6 +14,9 @@ export function LoginPage() {
   const [password, setPassword] = useState('')
   const queryClient = useQueryClient()
   const navigate = useNavigate()
+  const location = useLocation()
+  const external = useQuery({ queryKey: ['auth', 'external-config'], queryFn: externalOidcApi.config })
+  const externalError = new URLSearchParams(location.search).get('externalError')
   const signIn = useMutation({
     mutationFn: () => authApi.login(userName, password),
     onSuccess: async result => {
@@ -46,6 +50,11 @@ export function LoginPage() {
         onClick={() => passkeySignIn.mutate()}><Fingerprint size={18}/>
         {passkeySignIn.isPending ? 'در انتظار تأیید دستگاه...' : 'ورود با Passkey'}</Button>
       {passkeySignIn.isError && <p role="alert" className="error">{passkeySignIn.error instanceof Error ? passkeySignIn.error.message : 'ورود با Passkey انجام نشد.'}</p>}
+      {external.data?.enabled && <><div className="passkey-login-divider">یا</div>
+        <a className="button button--secondary full-width" href="/api/auth/external/start"><Building2 size={18}/> ورود با {external.data.displayName}</a></>}
+      {externalError && <p role="alert" className="error">{externalError === 'not-linked'
+        ? 'این هویت خارجی به هیچ حسابی متصل نیست. ابتدا با رمز عبور وارد شوید و از بخش حساب من اتصال را انجام دهید.'
+        : externalError === 'locked' ? 'این حساب موقتاً قفل شده است.' : 'ورود خارجی انجام نشد. دوباره تلاش کنید.'}</p>}
       <Link className="account-back-link" to="/forgot-password">رمز عبور را فراموش کرده‌اید؟</Link>
     </Card>
   </div>

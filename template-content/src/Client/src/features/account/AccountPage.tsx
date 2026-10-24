@@ -11,6 +11,7 @@ import { Field, Form, TextInput } from '../../shared/ui/Form'
 import { useToast } from '../../shared/ui/useToast'
 import { MfaSettings } from './MfaSettings'
 import { PasskeySettings } from './PasskeySettings'
+import { ExternalAccountSettings } from './ExternalAccountSettings'
 
 function ErrorMessage({ error }: { error: unknown }) {
   return error ? <p role="alert" className="error">{error instanceof ApiError && error.status === 503
@@ -117,6 +118,7 @@ export function AccountPage() {
       <PasswordEditor/>
       <MfaSettings/>
       <PasskeySettings/>
+      <ExternalAccountSettings/>
     </div>
   </div>
 }
