@@ -37,6 +37,7 @@ jobs:
         run: |
           set -euo pipefail
           npm ci --no-audit --no-fund
+          npm run api:check
           npm run lint
           npm run typecheck
           npm test

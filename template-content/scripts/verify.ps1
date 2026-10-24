@@ -14,6 +14,8 @@ try {
   try {
     npm ci --no-audit --no-fund
     if($LASTEXITCODE -ne 0){throw 'npm ci failed'}
+    npm run api:check
+    if($LASTEXITCODE -ne 0){throw 'OpenAPI contract drift detected'}
     npm run lint
     if($LASTEXITCODE -ne 0){throw 'npm lint failed'}
     npm run typecheck

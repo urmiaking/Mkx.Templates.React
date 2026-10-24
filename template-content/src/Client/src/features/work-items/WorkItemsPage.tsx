@@ -18,6 +18,7 @@ export function WorkItemsPage({ canManage }: { canManage: boolean }) {
   const [validationError, setValidationError] = useState('')
   const queryClient = useQueryClient()
   const items = useQuery({ queryKey: ['work-items', skip], queryFn: () => workItemApi.list(skip) })
+  const total = Number(items.data?.total ?? 0)
   const refresh = () => queryClient.invalidateQueries({ queryKey: ['work-items'] })
   const add = useMutation({ mutationFn: workItemApi.create, onSuccess: () => { setTitle(''); setSkip(0); refresh(); toast.show('کار جدید ثبت شد.','success') } })
   const toggle = useMutation({ mutationFn: workItemApi.update, onSuccess: () => { refresh(); toast.show('تغییرات ذخیره شد.','success') } })
@@ -46,7 +47,7 @@ export function WorkItemsPage({ canManage }: { canManage: boolean }) {
   return <div className="page motion-enter">
     <div className="page-head">
       <div><p className="eyebrow">نمونه Feature · End-to-End</p><h1>مدیریت کارها</h1><p className="muted">نمونه‌ای از ارتباط React، API، Application و EF Core با کنترل نسخه و خطای استاندارد</p></div>
-      <span className="count-pill">{items.data?.total ?? 0} مورد</span>
+      <span className="count-pill">{total} مورد</span>
     </div>
     <Card className="content-card">
       <form className="create-row" onSubmit={submit}>
@@ -61,11 +62,11 @@ export function WorkItemsPage({ canManage }: { canManage: boolean }) {
         <div role="alert" className="error">دریافت اطلاعات ناموفق بود. <button onClick={() => items.refetch()}>تلاش مجدد</button></div> :
         items.data?.items.length ? <ul className="work-list">{items.data.items.map(item => <WorkItemRow key={item.id} item={item}/>)}</ul> :
         <div className="empty-state"><Check size={27}/><h3>هنوز کاری ثبت نشده</h3><p className="muted">اولین مورد را از کادر بالا ثبت کنید.</p></div>}
-      {Boolean(items.data?.total && items.data.total > 20) &&
+      {total > 20 &&
         <div className="pagination">
           <Button variant="secondary" disabled={skip === 0} onClick={() => setSkip(Math.max(0, skip - 20))}>قبلی</Button>
-          <span>{Math.floor(skip / 20) + 1} / {Math.ceil((items.data?.total || 0) / 20)}</span>
-          <Button variant="secondary" disabled={skip + 20 >= (items.data?.total || 0)} onClick={() => setSkip(skip + 20)}>بعدی</Button>
+          <span>{Math.floor(skip / 20) + 1} / {Math.ceil(total / 20)}</span>
+          <Button variant="secondary" disabled={skip + 20 >= total} onClick={() => setSkip(skip + 20)}>بعدی</Button>
         </div>}
     </Card>
     <ConfirmDialog open={pendingDeletion !== null} onOpenChange={value => { if (!value) setPendingDeletion(null) }}

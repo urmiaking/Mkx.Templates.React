@@ -59,6 +59,10 @@ A SQL Server provider option exists, but **SQLite migrations are not valid SQL S
 
 See `AGENTS.md` and `docs/ai/` for feature implementation, security boundaries, tests and architecture. WorkItems is a tested example vertical slice; it is not production business logic. Replace starter brand/favicon/assets when generating a real app.
 
+## OpenAPI-generated TypeScript contracts
+
+The Server generates its OpenAPI document during an explicit build; the React client checks in the derived `src/Client/src/shared/api/schema.generated.ts`. After editing endpoint signatures or response metadata, run `cd src/Client; npm run api:generate` and commit the schema alongside the C# change. The `npm run api:check` command runs automatically during template verification and CI to detect contract drift. New feature APIs should use the typed `contractClient` shared with cookie/CSRF handling; WorkItems is the reference. See `docs/ai/OPENAPI_CONTRACTS.md`.
+
 ## Authorization and user administration
 
 After first-user bootstrap, the built-in `Administrators` role can manage users at `/users`. New accounts receive the `Users` role and read-only sample access; other permissions are explicit and enforced by the API. The `Administrators` role cannot be changed by the general permission editor. Changes to claims invalidate security stamps; users may need to sign in again. See `docs/ai/PARITY_ROADMAP.md` for the Blazor/React compatibility contract and remaining gaps.
