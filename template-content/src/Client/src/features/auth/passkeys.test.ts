@@ -34,9 +34,10 @@ describe('Passkey browser ceremony', () => {
       }}))
     } })
     vi.stubGlobal('isSecureContext', true)
+    vi.stubGlobal('window', { location: {hostname: 'localhost', protocol: 'http:', port: '5173'}, isSecureContext: true })
     vi.mocked(request).mockImplementation(async (path) => {
       if (path.endsWith('/create-options')) return {challenge:'challenge',rp:{id:'localhost'}} as never
-      if (path.endsWith('/request-options')) return {challenge:'challenge'} as never
+      if (path.endsWith('/request-options')) return {challenge:'challenge',rpId:'localhost'} as never
       return undefined as never
     })
   })
@@ -65,6 +66,24 @@ describe('Passkey browser ceremony', () => {
     const body = JSON.parse(String(calls[1]?.[1]?.body)) as {credentialJson:string}
     const credential = JSON.parse(body.credentialJson) as {response:{signature:string}}
     expect(credential.response.signature).toBe('Cg')
+  })
+
+  it('stops before the browser ceremony when the RP domain disagrees with the Vite address', async () => {
+    vi.stubGlobal('window', { location: {hostname: '127.0.0.1', protocol: 'http:', port: '5173'}, isSecureContext: true })
+    await expect(signInWithPasskey()).rejects.toThrow('http://localhost:5173')
+    await expect(registerPasskey('password', 'Laptop')).rejects.toThrow('http://localhost:5173')
+    expect(navigator.credentials.get).not.toHaveBeenCalled()
+    expect(navigator.credentials.create).not.toHaveBeenCalled()
+  })
+
+  it('accepts a trusted parent RP domain for production subdomains', async () => {
+    vi.stubGlobal('window', { location: {hostname: 'app.example.com', protocol: 'https:', port: ''}, isSecureContext: true })
+    vi.mocked(request).mockImplementation(async path => {
+      if (path.endsWith('/request-options')) return {challenge:'challenge',rpId:'example.com'} as never
+      return undefined as never
+    })
+    await signInWithPasskey()
+    expect(navigator.credentials.get).toHaveBeenCalledTimes(1)
   })
 
   it('rejects unsupported browsers and safely handles null assertion data', async () => {

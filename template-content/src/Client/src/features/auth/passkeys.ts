@@ -36,6 +36,22 @@ function base64url(value: ArrayBuffer | null | undefined) {
   return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '')
 }
 
+// WebAuthn RP IDs must match the page's actual hostname (or a parent domain).
+// Vite's development proxy can otherwise serve localhost RP options on 127.0.0.1.
+function ensurePasskeyDomain(rpId: string | undefined) {
+  if (!rpId || typeof window === 'undefined') return
+  const domain = rpId.toLowerCase()
+  const hostname = window.location.hostname.toLowerCase()
+  const ipAddress = /^\d{1,3}(?:\.\d{1,3}){3}$/.test(domain) || domain.includes(':')
+  if (!ipAddress && (hostname === domain || hostname.endsWith(`.${domain}`))) return
+  const localUrl = domain === 'localhost'
+    ? ` ${window.location.protocol}//localhost${window.location.port ? `:${window.location.port}` : ''}`
+    : ''
+  throw new Error(`دامنهٔ Passkey با آدرس فعلی سازگار نیست. ${localUrl
+    ? `برای استفاده از Passkey صفحه را از${localUrl} باز کنید.`
+    : `دامنهٔ تعریف‌شده در سرور (${rpId}) را با آدرس سایت هماهنگ کنید.`}`)
+}
+
 // Explicit serialization is compatible with password managers where invoking
 // PublicKeyCredential.toJSON through JSON.stringify throws Illegal invocation.
 export function serializePasskey(credential: PublicKeyCredential) {
@@ -73,6 +89,7 @@ export function serializePasskey(credential: PublicKeyCredential) {
 export async function registerPasskey(currentPassword: string, name: string) {
   if (!supportsPasskeys()) throw new Error('مرورگر یا اتصال فعلی از Passkey پشتیبانی نمی‌کند.')
   const options = await passkeyApi.createOptions(currentPassword)
+  ensurePasskeyDomain(options.rp?.id)
   const credential = await navigator.credentials.create({
     publicKey: PublicKeyCredential.parseCreationOptionsFromJSON(options)
   })
@@ -83,6 +100,7 @@ export async function registerPasskey(currentPassword: string, name: string) {
 export async function signInWithPasskey() {
   if (!supportsPasskeys()) throw new Error('برای ورود با Passkey به مرورگر سازگار و اتصال امن نیاز است.')
   const options = await passkeyApi.requestOptions()
+  ensurePasskeyDomain(options.rpId)
   const credential = await navigator.credentials.get({
     publicKey: PublicKeyCredential.parseRequestOptionsFromJSON(options)
   })
