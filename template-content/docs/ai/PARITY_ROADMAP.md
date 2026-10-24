@@ -33,7 +33,7 @@ The React backend uses explicitly registered policies rather than Blazor's dynam
 | Blazor dialog/form/table/toast/OTP primitives | **Phase 1 baseline implemented**: Dialog, ConfirmDialog, Form/Field, Select, OTP, DataTable, Toast, Button/IconButton, Breadcrumbs; refine feature-specific patterns as needed |
 | Notifications, mobile bottom navigation, advanced appearance picker | Not yet implemented in React |
 | SQL Server provider-specific migrations | Runtime provider hook exists; migrations currently SQLite-specific |
-| OpenAPI-generated strongly typed TypeScript client | Build-time schema generation, typed WorkItems reference client and local/CI drift check implemented; migrate other feature return types once endpoints publish typed response metadata |
+| OpenAPI-generated strongly typed TypeScript client | Build-time schema generation, typed WorkItems + user administration + account self-service clients and local/CI drift check implemented; authentication/MFA/passkey response metadata remains |
 | Optional sample feature parameter | React currently includes sample WorkItems by default; optional flag requires tested generation logic |
 | Identity claims/roles management at large organizational scale | Requires paging/search improvements, role assignment flows and audit logs |
 | Production readiness | Configure deployment-specific security, identity lifecycle, secrets, persistent key ring, backups, and integration tests |
@@ -50,7 +50,7 @@ Each granted capability is an Identity claim whose **Claim.Type** equals the pol
 
 ## Next milestone
 
-Reusable UI primitives, guarded account administration, profile editing, email verification and password recovery are implemented. Next: expand typed response metadata and contract-client adoption, then broader account security and UI parity before multiplying business features. For each milestone, keep the independent Blazor code untouched unless an explicitly approved shared-contract change is necessary.
+Reusable UI primitives, guarded account administration, profile editing, email verification and password recovery are implemented. Next: cover authentication/MFA/passkey response metadata and typed-client migration, then broader account security and UI parity before multiplying business features. For each milestone, keep the independent Blazor code untouched unless an explicitly approved shared-contract change is necessary.
 
 ## Username parity
 

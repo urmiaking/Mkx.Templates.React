@@ -61,7 +61,7 @@ See `AGENTS.md` and `docs/ai/` for feature implementation, security boundaries, 
 
 ## OpenAPI-generated TypeScript contracts
 
-The Server generates its OpenAPI document during an explicit build; the React client checks in the derived `src/Client/src/shared/api/schema.generated.ts`. After editing endpoint signatures or response metadata, run `cd src/Client; npm run api:generate` and commit the schema alongside the C# change. The `npm run api:check` command runs automatically during template verification and CI to detect contract drift. New feature APIs should use the typed `contractClient` shared with cookie/CSRF handling; WorkItems is the reference. See `docs/ai/OPENAPI_CONTRACTS.md`.
+The Server generates its OpenAPI document during an explicit build; the React client checks in the derived `src/Client/src/shared/api/schema.generated.ts`. After editing endpoint signatures or response metadata, run `cd src/Client; npm run api:generate` and commit the schema alongside the C# change. The `npm run api:check` command runs automatically during template verification and CI to detect contract drift. New feature APIs should use the typed `contractClient` shared with cookie/CSRF handling; WorkItems, user administration and account self-service are typed reference features. See `docs/ai/OPENAPI_CONTRACTS.md`.
 
 ## Authorization and user administration
 

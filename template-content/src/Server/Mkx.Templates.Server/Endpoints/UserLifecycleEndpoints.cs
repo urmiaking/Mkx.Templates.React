@@ -47,7 +47,7 @@ public static class UserLifecycleEndpoints
             if (!result.Succeeded) return IdentityErrors(result);
             await users.UpdateSecurityStampAsync(user);
             return Results.Ok(await DescribeAsync(users, user));
-        }).RequireAuthorization(AppPolicies.Users.Manage);
+        }).RequireAuthorization(AppPolicies.Users.Manage).Produces<UserSummary>();
 
         group.MapPut("/users/{id:guid}/lock", async (Guid id, UpdateUserLockRequest request,
             UserManager<AppUser> users, ClaimsPrincipal principal) =>
@@ -64,7 +64,7 @@ public static class UserLifecycleEndpoints
                 await users.ResetAccessFailedCountAsync(user);
             await users.UpdateSecurityStampAsync(user);
             return Results.Ok(await DescribeAsync(users, user));
-        }).RequireAuthorization(AppPolicies.Users.Manage);
+        }).RequireAuthorization(AppPolicies.Users.Manage).Produces<UserSummary>();
 
         group.MapPut("/users/{id:guid}/roles", async (Guid id, UpdateUserRolesRequest request,
             UserManager<AppUser> users, RoleManager<IdentityRole<Guid>> roles, ClaimsPrincipal principal) =>
@@ -92,7 +92,7 @@ public static class UserLifecycleEndpoints
             }
             await users.UpdateSecurityStampAsync(user);
             return Results.Ok(await DescribeAsync(users, user));
-        }).RequireAuthorization(AppPolicies.Users.ManageClaims);
+        }).RequireAuthorization(AppPolicies.Users.ManageClaims).Produces<UserSummary>();
 
         group.MapDelete("/users/{id:guid}", async (Guid id, UserManager<AppUser> users,
             ClaimsPrincipal principal) =>
@@ -102,7 +102,7 @@ public static class UserLifecycleEndpoints
             if (await ProtectedAsync(users, user, principal)) return Results.Forbid();
             var result = await users.DeleteAsync(user);
             return result.Succeeded ? Results.NoContent() : IdentityErrors(result);
-        }).RequireAuthorization(AppPolicies.Users.Manage);
+        }).RequireAuthorization(AppPolicies.Users.Manage).Produces(StatusCodes.Status204NoContent);
         return group;
     }
 

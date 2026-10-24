@@ -34,6 +34,8 @@ Account lockout rejects new password sign-ins. Existing authentication cookies m
 
 ## Verification
 
+OpenAPI provides the authoritative `UserSummary`, `UsersPage`, and `RoleSummary` response shapes; `users.api.ts` uses the shared typed `contractClient` for each route, with the existing CSRF/cookie transport. Regenerate declarations with `npm run api:generate` and check for drift with `npm run api:check` after endpoint metadata changes.
+
 The backend's `AuthenticatedCrudTests.AccountLifecycle_ProtectsAdministratorsAndSelf_AndEnforcesPolicies` covers protected accounts, policy enforcement, forbidden elevation, email changes, role membership, lock/unlock, rejected login and deletion. Client Vitest tests exercise validation and interactive administrator/member actions. Run the root `./scripts/verify-template.ps1` before release to ensure the NuGet template produces a working rebranded solution.
 
 ## Not yet implemented

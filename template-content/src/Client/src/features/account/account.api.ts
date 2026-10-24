@@ -1,18 +1,21 @@
-import { request } from '../../shared/api/http'
+import { apiData, contractClient } from '../../shared/api/http'
+import type { components } from '../../shared/api/schema.generated'
 
-export type AccountProfile = { userName: string; email: string | null; emailConfirmed: boolean }
+export type AccountProfile = components['schemas']['AccountProfile']
 
 export const accountApi = {
-  profile: () => request<AccountProfile>('/api/account/profile'),
-  updateProfile: (userName: string, email: string) =>
-    request<AccountProfile>('/api/account/profile', { method: 'PUT', body: JSON.stringify({ userName, email }) }),
-  changePassword: (currentPassword: string, newPassword: string) =>
-    request<void>('/api/account/password', { method: 'POST', body: JSON.stringify({ currentPassword, newPassword }) }),
-  sendVerification: () => request<void>('/api/account/verify-email/request', { method: 'POST' }),
-  verifyEmail: (userId: string, token: string) =>
-    request<void>('/api/account/verify-email', { method: 'POST', body: JSON.stringify({ userId, token }) }),
-  forgotPassword: (email: string) =>
-    request<void>('/api/account/forgot-password', { method: 'POST', body: JSON.stringify({ email }) }),
-  resetPassword: (email: string, token: string, newPassword: string) =>
-    request<void>('/api/account/reset-password', { method: 'POST', body: JSON.stringify({ email, token, newPassword }) })
+  profile: async () =>
+    apiData(await contractClient.GET('/api/account/profile')),
+  updateProfile: async (userName: string, email: string) =>
+    apiData(await contractClient.PUT('/api/account/profile', { body: { userName, email } })),
+  changePassword: async (currentPassword: string, newPassword: string) =>
+    apiData(await contractClient.POST('/api/account/password', { body: { currentPassword, newPassword } })),
+  sendVerification: async () =>
+    apiData(await contractClient.POST('/api/account/verify-email/request')),
+  verifyEmail: async (userId: string, token: string) =>
+    apiData(await contractClient.POST('/api/account/verify-email', { body: { userId, token } })),
+  forgotPassword: async (email: string) =>
+    apiData(await contractClient.POST('/api/account/forgot-password', { body: { email } })),
+  resetPassword: async (email: string, token: string, newPassword: string) =>
+    apiData(await contractClient.POST('/api/account/reset-password', { body: { email, token, newPassword } }))
 }

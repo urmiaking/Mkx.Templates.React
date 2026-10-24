@@ -21,6 +21,8 @@ This React milestone complements the administration lifecycle without extending 
 | `POST /api/account/forgot-password` | Public | Returns 202 for known/unknown email; mails only confirmed accounts when configured |
 | `POST /api/account/reset-password` | Token | Reset via Identity's expiring, security-stamp-aware token |
 
+`AccountProfile` is generated from the C# response record; the React `account.api.ts` uses typed OpenAPI operations for all listed routes. Successful write responses are 204 (no body) or 202 (recovery/accepted). Regenerate with `npm run api:generate` after endpoint changes; the CI drift check enforces parity.
+
 All non-GET calls require the CSRF header. Public recovery/verification endpoints are rate limited by IP (8 requests per 10 minutes). Neither passwords nor verification/reset tokens are returned to frontend API consumers, placed in logs, or stored in client-side storage. The intended link itself carries a short-lived Identity token.
 
 ## Configure email delivery

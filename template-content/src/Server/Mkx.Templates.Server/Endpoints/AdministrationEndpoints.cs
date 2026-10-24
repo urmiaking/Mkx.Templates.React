@@ -23,7 +23,7 @@ public static class AdministrationEndpoints
             var results = new List<UserSummary>(page.Count);
             foreach (var user in page) results.Add(await DescribeAsync(users, user));
             return Results.Ok(new UsersPage(results, total));
-        }).RequireAuthorization(AppPolicies.Users.View);
+        }).RequireAuthorization(AppPolicies.Users.View).Produces<UsersPage>();
 
         group.MapPost("/users", async (CreateUserRequest request, UserManager<AppUser> users, RoleManager<IdentityRole<Guid>> roles) =>
         {
@@ -49,7 +49,7 @@ public static class AdministrationEndpoints
             }
             EnsureSucceeded(await users.AddToRoleAsync(user, member));
             return Results.Created($"/api/admin/users/{user.Id}", await DescribeAsync(users, user));
-        }).RequireAuthorization(AppPolicies.Users.Manage);
+        }).RequireAuthorization(AppPolicies.Users.Manage).Produces<UserSummary>(StatusCodes.Status201Created);
 
         group.MapGet("/roles", async (RoleManager<IdentityRole<Guid>> roles) =>
         {
@@ -61,7 +61,7 @@ public static class AdministrationEndpoints
                     .Select(x => x.Type).Where(AppPolicies.IsKnown).Distinct().ToArray()));
             }
             return Results.Ok(results);
-        }).RequireAuthorization(AppPolicies.Users.View);
+        }).RequireAuthorization(AppPolicies.Users.View).Produces<List<RoleSummary>>();
 
         group.MapPut("/roles/{roleName}/permissions", async (string roleName, UpdatePermissionsRequest request,
             RoleManager<IdentityRole<Guid>> roles, UserManager<AppUser> users) =>
@@ -79,7 +79,7 @@ public static class AdministrationEndpoints
             foreach (var member in await users.GetUsersInRoleAsync(roleName))
                 EnsureSucceeded(await users.UpdateSecurityStampAsync(member));
             return Results.NoContent();
-        }).RequireAuthorization(AppPolicies.Users.ManageClaims);
+        }).RequireAuthorization(AppPolicies.Users.ManageClaims).Produces(StatusCodes.Status204NoContent);
 
         group.MapPut("/users/{id:guid}/permissions", async (Guid id, UpdatePermissionsRequest request, UserManager<AppUser> users) =>
         {
@@ -95,7 +95,7 @@ public static class AdministrationEndpoints
                 EnsureSucceeded(await users.AddClaimAsync(user, new Claim(permission, "true")));
             EnsureSucceeded(await users.UpdateSecurityStampAsync(user));
             return Results.NoContent();
-        }).RequireAuthorization(AppPolicies.Users.ManageClaims);
+        }).RequireAuthorization(AppPolicies.Users.ManageClaims).Produces(StatusCodes.Status204NoContent);
         group.MapUserLifecycleEndpoints();
         return group;
     }

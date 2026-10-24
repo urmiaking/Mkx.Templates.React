@@ -23,7 +23,7 @@ public static class AccountEndpoints
         {
             var user = await users.GetUserAsync(principal);
             return user is null ? Results.Unauthorized() : Results.Ok(Describe(user));
-        }).RequireAuthorization();
+        }).RequireAuthorization().Produces<AccountProfile>();
 
         group.MapPut("/profile", async (UpdateProfileRequest request, ClaimsPrincipal principal,
             UserManager<AppUser> users, SignInManager<AppUser> signIn, IAccountEmailSender emailSender,
@@ -50,7 +50,7 @@ public static class AccountEndpoints
             if (!result.Succeeded) return IdentityErrors(result);
             await signIn.RefreshSignInAsync(user);
             return Results.Ok(Describe(user));
-        }).RequireAuthorization();
+        }).RequireAuthorization().Produces<AccountProfile>();
 
         group.MapPost("/password", async (ChangePasswordRequest request, ClaimsPrincipal principal,
             UserManager<AppUser> users, SignInManager<AppUser> signIn) =>
@@ -63,7 +63,7 @@ public static class AccountEndpoints
             if (!result.Succeeded) return IdentityErrors(result);
             await signIn.RefreshSignInAsync(user);
             return Results.NoContent();
-        }).RequireAuthorization();
+        }).RequireAuthorization().Produces(StatusCodes.Status204NoContent);
 
         group.MapPost("/verify-email/request", async (ClaimsPrincipal principal, UserManager<AppUser> users,
             IAccountEmailSender sender, IConfiguration config, IWebHostEnvironment env,
@@ -83,7 +83,8 @@ public static class AccountEndpoints
                 return Results.Problem(statusCode: 503, title: "Unable to send email. Try again later.");
             }
             return Results.Accepted();
-        }).RequireAuthorization().RequireRateLimiting("account-recovery");
+        }).RequireAuthorization().RequireRateLimiting("account-recovery")
+            .Produces(StatusCodes.Status202Accepted).Produces(StatusCodes.Status204NoContent);
 
         group.MapPost("/verify-email", async (VerifyEmailRequest request, UserManager<AppUser> users) =>
         {
@@ -94,7 +95,7 @@ public static class AccountEndpoints
             var result = await users.ConfirmEmailAsync(user, request.Token);
             return result.Succeeded ? Results.NoContent() :
                 Results.BadRequest(new { title = "Invalid or expired verification link." });
-        }).RequireRateLimiting("account-recovery");
+        }).RequireRateLimiting("account-recovery").Produces(StatusCodes.Status204NoContent);
 
         group.MapPost("/forgot-password", async (ForgotPasswordRequest request, UserManager<AppUser> users,
             IAccountEmailSender sender, IConfiguration config, IWebHostEnvironment env,
@@ -112,7 +113,7 @@ public static class AccountEndpoints
                 catch (Exception ex) { loggers.CreateLogger("AccountEmail").LogError(ex, "Password recovery delivery failed."); }
             }
             return Results.Accepted();
-        }).RequireRateLimiting("account-recovery");
+        }).RequireRateLimiting("account-recovery").Produces(StatusCodes.Status202Accepted);
 
         group.MapPost("/reset-password", async (ResetPasswordRequest request, UserManager<AppUser> users) =>
         {
@@ -125,7 +126,7 @@ public static class AccountEndpoints
             var result = await users.ResetPasswordAsync(user, request.Token, request.NewPassword);
             return result.Succeeded ? Results.NoContent() :
                 Results.BadRequest(new { title = "Invalid reset token or password." });
-        }).RequireRateLimiting("account-recovery");
+        }).RequireRateLimiting("account-recovery").Produces(StatusCodes.Status204NoContent);
         return group;
     }
 

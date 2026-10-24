@@ -68,7 +68,9 @@ export function UsersPage({canManage,canManageClaims,currentUserName}:Props) {
     selected.userName.toLocaleLowerCase()===currentUserName?.toLocaleLowerCase()
   const canEdit=canManage&&!protectedAccount
   const canGrant=canManageClaims&&!protectedAccount
-  const pages=Math.max(1,Math.ceil((users.data?.total??0)/20))
+  // OpenAPI numeric formats allow string | number; paging is bounded to safe integers.
+  const userTotal=Number(users.data?.total??0)
+  const pages=Math.max(1,Math.ceil(userTotal/20))
 
   async function refresh() {
     await Promise.all([
@@ -142,7 +144,7 @@ export function UsersPage({canManage,canManageClaims,currentUserName}:Props) {
       {canManage && <Button type="button" onClick={startCreate}><UserPlus size={18}/>کاربر جدید</Button>}
     </div>
     <div className="manage-stats">
-      <div className="manage-stat"><Users size={19}/><div><strong>{(users.data?.total??0).toLocaleString('fa-IR')}</strong><span>کاربر ثبت‌شده</span></div></div>
+      <div className="manage-stat"><Users size={19}/><div><strong>{userTotal.toLocaleString('fa-IR')}</strong><span>کاربر ثبت‌شده</span></div></div>
       <div className="manage-stat"><ShieldCheck size={19}/><div><strong>{(roles.data?.length??0).toLocaleString('fa-IR')}</strong><span>نقش سیستم</span></div></div>
       <div className="manage-stat"><KeyRound size={19}/><div><strong>{allPermissions.length.toLocaleString('fa-IR')}</strong><span>مجوز تعریف‌شده</span></div></div>
     </div>

@@ -260,7 +260,9 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
+                    content: {
+                        "application/json": components["schemas"]["AccountProfile"];
+                    };
                 };
             };
         };
@@ -282,7 +284,9 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
+                    content: {
+                        "application/json": components["schemas"]["AccountProfile"];
+                    };
                 };
             };
         };
@@ -315,8 +319,8 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description OK */
-                200: {
+                /** @description No Content */
+                204: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -348,8 +352,15 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description OK */
-                200: {
+                /** @description Accepted */
+                202: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description No Content */
+                204: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -385,8 +396,8 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description OK */
-                200: {
+                /** @description No Content */
+                204: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -422,8 +433,8 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description OK */
-                200: {
+                /** @description Accepted */
+                202: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -459,8 +470,8 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description OK */
-                200: {
+                /** @description No Content */
+                204: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -1252,7 +1263,9 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
+                    content: {
+                        "application/json": components["schemas"]["UsersPage"];
+                    };
                 };
             };
         };
@@ -1270,12 +1283,14 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description OK */
-                200: {
+                /** @description Created */
+                201: {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
+                    content: {
+                        "application/json": components["schemas"]["UserSummary"];
+                    };
                 };
             };
         };
@@ -1306,7 +1321,9 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
+                    content: {
+                        "application/json": components["schemas"]["RoleSummary"][];
+                    };
                 };
             };
         };
@@ -1341,8 +1358,8 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description OK */
-                200: {
+                /** @description No Content */
+                204: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -1380,8 +1397,8 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description OK */
-                200: {
+                /** @description No Content */
+                204: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -1424,7 +1441,9 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
+                    content: {
+                        "application/json": components["schemas"]["UserSummary"];
+                    };
                 };
             };
         };
@@ -1463,7 +1482,9 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
+                    content: {
+                        "application/json": components["schemas"]["UserSummary"];
+                    };
                 };
             };
         };
@@ -1502,7 +1523,9 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
+                    content: {
+                        "application/json": components["schemas"]["UserSummary"];
+                    };
                 };
             };
         };
@@ -1534,8 +1557,8 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description OK */
-                200: {
+                /** @description No Content */
+                204: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -1552,6 +1575,11 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        AccountProfile: {
+            userName: string;
+            email: null | string;
+            emailConfirmed: boolean;
+        };
         ChangePasswordRequest: {
             currentPassword: string;
             newPassword: string;
@@ -1596,6 +1624,10 @@ export interface components {
             token: string;
             newPassword: string;
         };
+        RoleSummary: {
+            name: string;
+            permissions: string[];
+        };
         TwoFactorLoginRequest: {
             code: string;
             /** @default false */
@@ -1626,6 +1658,24 @@ export interface components {
             isComplete: boolean;
             /** Format: int64 */
             version: number | string;
+        };
+        UsersPage: {
+            items: components["schemas"]["UserSummary"][];
+            /** Format: int32 */
+            total: number | string;
+        };
+        UserSummary: {
+            /** Format: uuid */
+            id: string;
+            email: string;
+            roles: string[];
+            directPermissions: string[];
+            /** @default false */
+            emailConfirmed: boolean;
+            /** @default false */
+            isLocked: boolean;
+            /** @default  */
+            userName: string;
         };
         VerifyEmailRequest: {
             userId: string;
