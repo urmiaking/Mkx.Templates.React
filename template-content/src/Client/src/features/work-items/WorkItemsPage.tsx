@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Check, Circle, Plus, Trash2, RefreshCcw } from 'lucide-react'
 import { workItemApi } from './work-item.api'
@@ -12,8 +13,22 @@ import { ApiError } from '../../shared/api/http'
 
 export function WorkItemsPage({ canManage }: { canManage: boolean }) {
   const [title, setTitle] = useState('')
+  const titleInputRef = useRef<HTMLInputElement>(null)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const createRequested = searchParams.get('create') === '1'
   const [pendingDeletion, setPendingDeletion] = useState<WorkItem | null>(null)
   const toast = useToast()
+
+  useEffect(() => {
+    if (!canManage || !createRequested) return
+    titleInputRef.current?.scrollIntoView?.({ block: 'center', behavior: 'smooth' })
+    titleInputRef.current?.focus()
+    setSearchParams(previous => {
+      const next = new URLSearchParams(previous)
+      next.delete('create')
+      return next
+    }, { replace: true })
+  }, [canManage, createRequested, setSearchParams])
   const [skip, setSkip] = useState(0)
   const [validationError, setValidationError] = useState('')
   const queryClient = useQueryClient()
@@ -51,7 +66,7 @@ export function WorkItemsPage({ canManage }: { canManage: boolean }) {
     </div>
     <Card className="content-card">
       <form className="create-row" onSubmit={submit}>
-        <div className="input-holder"><label className="sr-only" htmlFor="new-title">عنوان کار</label><input id="new-title" placeholder="مثلاً طراحی صفحه گزارش‌ها..." value={title} onChange={event => { setTitle(event.target.value); setValidationError('') }} disabled={!canManage || add.isPending} /></div>
+        <div className="input-holder"><label className="sr-only" htmlFor="new-title">عنوان کار</label><input ref={titleInputRef} id="new-title" placeholder="مثلاً طراحی صفحه گزارش‌ها..." value={title} onChange={event => { setTitle(event.target.value); setValidationError('') }} disabled={!canManage || add.isPending} /></div>
         <Button type="submit" disabled={!canManage || add.isPending}><Plus size={17}/>{add.isPending ? 'در حال ثبت...' : 'افزودن کار'}</Button>
       </form>
       {validationError && <p className="error" role="alert">{validationError}</p>}

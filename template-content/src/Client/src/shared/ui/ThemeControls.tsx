@@ -100,16 +100,25 @@ export function PalettePicker({ palette, setPalette, mobilePickerHidden, setMobi
     }
   }, [open, closeSheet])
 
-  const centerY = position * viewportHeight
-  const effectivePanelHeight = Math.min(viewportWidth <= 680 ? 290 : panelHeight, Math.max(120, viewportHeight - 24))
-  const maxPanelTop = Math.max(12, viewportHeight - effectivePanelHeight - 12)
-  const panelTop = Math.max(12, Math.min(maxPanelTop, centerY - effectivePanelHeight / 2))
+  // The mobile bottom navigation occupies the last 76px of the viewport.
+  // Keep the floating tab and its expanded sheet clear of both fixed bars.
+  const isIdentityRoute = ['/login', '/login/2fa', '/forgot-password', '/reset-password', '/verify-email'].includes(location.pathname)
+  const mobileWorkspace = viewportWidth <= 1020 && !isIdentityRoute
+  const topInset = mobileWorkspace ? (viewportWidth <= 680 ? 76 : 90) : 12
+  const bottomInset = mobileWorkspace ? 84 : 12
+  const minCenter = topInset + tabHeight / 2
+  const maxCenter = Math.max(minCenter, viewportHeight - bottomInset - tabHeight / 2)
+  const centerY = Math.max(minCenter, Math.min(maxCenter, position * viewportHeight))
+  const effectivePanelHeight = Math.min(viewportWidth <= 680 ? 290 : panelHeight,
+    Math.max(tabHeight, viewportHeight - topInset - bottomInset))
+  const maxPanelTop = Math.max(topInset, viewportHeight - effectivePanelHeight - bottomInset)
+  const panelTop = Math.max(topInset, Math.min(maxPanelTop, centerY - effectivePanelHeight / 2))
   const originY = Math.max(tabHeight / 2, Math.min(effectivePanelHeight - tabHeight / 2, centerY - panelTop))
-  const pickerStyle = { top: panelTop, '--palette-origin-y': originY + 'px' } as CSSProperties
+  const pickerStyle = { top: panelTop, height: effectivePanelHeight, '--palette-origin-y': originY + 'px' } as CSSProperties
 
   const moveTo = (next: number, persist = false) => {
-    const margin = tabHeight / 2 / window.innerHeight
-    const ratio = Math.max(margin, Math.min(1 - margin, next))
+    const desiredCenter = next * window.innerHeight
+    const ratio = Math.max(minCenter, Math.min(maxCenter, desiredCenter)) / window.innerHeight
     setPosition(ratio)
     if (persist) savePosition(ratio)
     return ratio

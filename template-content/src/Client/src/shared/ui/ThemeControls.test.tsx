@@ -79,6 +79,26 @@ describe('one-piece palette picker', () => {
     }
   })
 
+  it('keeps the palette sheet above mobile bottom navigation', () => {
+    const previousWidth = window.innerWidth
+    const previousHeight = window.innerHeight
+    localStorage.setItem('Theme.PickerPosition', '1')
+    try {
+      Object.defineProperty(window, 'innerWidth', { configurable: true, value: 320 })
+      Object.defineProperty(window, 'innerHeight', { configurable: true, value: 568 })
+      render(<MemoryRouter><PalettePicker palette="jade" setPalette={vi.fn()}
+        mobilePickerHidden={false} setMobilePickerHidden={vi.fn()}/></MemoryRouter>)
+      const picker = document.querySelector<HTMLElement>('.palette-picker-floating')!
+      const top = Number.parseFloat(picker.style.top)
+      const height = Number.parseFloat(picker.style.height)
+      expect(top).toBeGreaterThanOrEqual(76)
+      expect(top + height).toBeLessThanOrEqual(568 - 84)
+    } finally {
+      Object.defineProperty(window, 'innerWidth', { configurable: true, value: previousWidth })
+      Object.defineProperty(window, 'innerHeight', { configurable: true, value: previousHeight })
+    }
+  })
+
   it('provides mobile quick swatches and a visibility toggle', () => {
     const setPalette = vi.fn()
     const setMobilePickerHidden = vi.fn()

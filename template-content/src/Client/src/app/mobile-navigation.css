@@ -1,0 +1,111 @@
+/* Fixed mobile navigation mirrors the Blazor workspace bottom bar. */
+.mobile-navigation { display: none; }
+
+@media (max-width: 1020px) {
+  .mobile-navigation {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    align-items: center;
+    position: fixed;
+    inset-inline: 0;
+    bottom: 0;
+    z-index: 19;
+    min-height: 71px;
+    padding: 9px 8px max(8px, env(safe-area-inset-bottom));
+    background: var(--surface);
+    border-top: 1px solid var(--line);
+    box-shadow: 0 -3px 20px rgba(18, 61, 81, .075);
+  }
+
+  .content-shell {
+    padding-bottom: calc(76px + env(safe-area-inset-bottom));
+  }
+
+  /* The drawer and scrim (z20/22) cover the floating appearance picker. */
+  .palette-picker-floating { z-index: 18; }
+
+  .mobile-navigation__item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    min-width: 0;
+    min-height: 52px;
+    padding: 2px;
+    border: 0;
+    border-radius: 12px;
+    background: transparent;
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.5;
+    text-align: center;
+    white-space: nowrap;
+    transition: color .2s ease, background-color .2s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .mobile-navigation__item > svg {
+    flex: none;
+    transition: transform .28s cubic-bezier(.22, 1, .36, 1), color .28s ease;
+  }
+
+  .mobile-navigation__item.is-active {
+    color: var(--primary);
+    font-weight: 800;
+  }
+
+  .mobile-navigation__item.is-active > svg {
+    transform: translateY(-3px) scale(1.08);
+  }
+
+  .mobile-navigation__item--primary {
+    position: relative;
+    overflow: visible;
+    color: var(--primary);
+    font-weight: 800;
+  }
+
+  .mobile-navigation__action-circle {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 62px;
+    height: 62px;
+    margin-top: -34px;
+    border: 5px solid var(--surface);
+    border-radius: 50%;
+    background: var(--primary);
+    color: var(--primary-contrast);
+    box-shadow: 0 10px 22px rgba(15, 65, 88, .25);
+    transition: transform .2s ease, background-color .2s ease;
+  }
+
+  .mobile-navigation__item--primary.is-active .mobile-navigation__action-circle {
+    background: var(--primary);
+  }
+
+  @media (hover: hover) {
+    .mobile-navigation__item:not(.mobile-navigation__item--primary):hover {
+      color: var(--primary);
+      background: var(--surface-hover);
+    }
+    .mobile-navigation__item--primary:hover .mobile-navigation__action-circle {
+      transform: translateY(-3px);
+    }
+  }
+}
+
+@media (max-width: 370px) {
+  .mobile-navigation__item { font-size: 10px; }
+  .mobile-navigation__action-circle { width: 56px; height: 56px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mobile-navigation__item,
+  .mobile-navigation__item > svg,
+  .mobile-navigation__action-circle {
+    transition: none;
+  }
+}

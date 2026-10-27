@@ -16,6 +16,7 @@ import { policies } from '../features/users/users.api'
 import { useTheme } from '../shared/hooks/useTheme'
 import { PalettePicker, SidebarAppearance, ThemeButton } from '../shared/ui/ThemeControls'
 import { IdentityLayout } from './IdentityLayout'
+import { MobileNavigation } from './MobileNavigation'
 import { Card } from '../shared/ui/Card'
 
 function AccessDenied({ authenticated }: { authenticated: boolean }) {
@@ -146,5 +147,14 @@ export function App() {
       <footer className="app-footer"><span>© Mkx Templates</span><span><Github size={14}/> توسعه‌پذیر و مستقل از UI Library</span></footer>
     </div>
     </div>
+    <MobileNavigation
+      authenticated={isAuthenticated}
+      canViewWorkItems={can(policies.workItemsView)}
+      canManageWorkItems={can(policies.workItemsManage)}
+      canViewUsers={can(policies.usersView)}
+      mode={mode}
+      onToggleTheme={toggle}
+      onOpenMenu={() => setMenuOpen(true)}
+    />
   </>
 }
