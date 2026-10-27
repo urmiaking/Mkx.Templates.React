@@ -23,3 +23,7 @@ For user lifecycle changes read docs/ai/USER_ADMINISTRATION.md. For self-service
 ## Authentication and account UI
 
 Keep login username/password (not email lookup) in API, tests and React. Preserve independent username/email fields, role and policy checks, antiforgery, and development-only admin/admin compatibility. Read docs/ai/SECURITY.md and docs/ai/USER_ADMINISTRATION.md before modifying identity behavior.
+
+
+## Web Push
+See docs/ai/PUSH_NOTIFICATIONS.md for VAPID secret setup, device ownership, secure delivery and browser opt-in. Never expose private keys or arbitrary send APIs.

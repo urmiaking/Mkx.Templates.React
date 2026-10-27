@@ -1,0 +1,8 @@
+.push-control { position:relative; display:flex; align-items:center }
+.push-panel { position:absolute; inset-inline-end:0; top:calc(100% + 12px); width:min(340px,calc(100vw - 28px)); padding:16px; border:1px solid var(--line); border-radius:16px; background:var(--surface); color:var(--text); box-shadow:0 16px 48px #0002; z-index:110; display:grid; gap:14px; }
+.push-panel__header { display:flex; align-items:center; justify-content:space-between; gap:12px }
+.push-panel__header .icon-button { width:34px; height:34px }
+.push-panel p { margin:0; color:var(--muted); font-size:0.82rem; line-height:1.8 }
+.push-panel .push-panel__error { color:var(--danger, #c23c4e) }
+.push-panel .button { justify-self:start; display:flex; align-items:center; gap:8px }
+@media (max-width:480px) { .push-panel { position:fixed; top:74px; inset-inline:14px; width:auto } }

@@ -4,6 +4,7 @@
     <ProjectReference Include="..\..\Application\Mkx.Templates.Application\Mkx.Templates.Application.csproj" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" />
     <PackageReference Include="System.Security.Cryptography.Pkcs" />
+    <PackageReference Include="WebPush" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design">

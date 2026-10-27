@@ -13,8 +13,11 @@ using Mkx.Templates.Application.WorkItems;
 using Mkx.Templates.Infrastructure.Persistence;
 using Mkx.Templates.Server.Endpoints;
 using Mkx.Templates.Server.Services;
+using Mkx.Templates.Application.Notifications;
+using Mkx.Templates.Infrastructure.Notifications;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Configuration.AddJsonFile("appsettings.Push.local.json", optional: true, reloadOnChange: true);
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
@@ -26,6 +29,8 @@ builder.Services.AddExceptionHandler<Mkx.Templates.Server.ApiExceptionHandler>()
 builder.Services.AddOpenApi();
 builder.Services.AddHealthChecks();
 builder.Services.AddScoped<WorkItemService>();
+builder.Services.AddScoped<PushNotificationService>();
+builder.Services.AddScoped<IPushNotificationSender>(sp => sp.GetRequiredService<PushNotificationService>());
 builder.Services.AddScoped<IWorkItemStore, WorkItemStore>();
 builder.Services.AddScoped<IAccountEmailSender, SmtpAccountEmailSender>();
 
@@ -238,7 +243,8 @@ app.Use(async (context, next) =>
         context.Request.Path.StartsWithSegments("/verify-email") ? "no-referrer" : "strict-origin-when-cross-origin";
     if (context.Request.Path.StartsWithSegments("/api/auth") ||
         context.Request.Path.StartsWithSegments("/api/admin") ||
-        context.Request.Path.StartsWithSegments("/api/account"))
+        context.Request.Path.StartsWithSegments("/api/account") ||
+        context.Request.Path.StartsWithSegments("/api/push"))
         context.Response.Headers.CacheControl = "no-store";
     await next();
 });
@@ -276,6 +282,7 @@ app.MapMfaEndpoints();
 app.MapPasskeyEndpoints();
 app.MapExternalOidcEndpoints();
 app.MapWorkItemEndpoints();
+app.MapPushEndpoints();
 app.MapAdministrationEndpoints();
 app.Map("/api/{**path}", () => Results.NotFound());
 app.MapFallbackToFile("index.html");

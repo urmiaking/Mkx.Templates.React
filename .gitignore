@@ -20,3 +20,5 @@ _generate_backend.py
 _generate_frontend.py
 template-verification.log
 **/*.tsbuildinfo
+
+**/appsettings.Push.local.json

@@ -17,6 +17,8 @@ import { useTheme } from '../shared/hooks/useTheme'
 import { PalettePicker, SidebarAppearance, ThemeButton } from '../shared/ui/ThemeControls'
 import { IdentityLayout } from './IdentityLayout'
 import { MobileNavigation } from './MobileNavigation'
+import { PushControl } from '../features/push/PushControl'
+import { detachPushOnLogout } from '../features/push/browser-push'
 import { Card } from '../shared/ui/Card'
 
 function AccessDenied({ authenticated }: { authenticated: boolean }) {
@@ -56,7 +58,7 @@ export function App() {
   const menuDismissRef = useRef<HTMLButtonElement>(null)
   const queryClient = useQueryClient()
   const session = useQuery({ queryKey: ['session'], queryFn: authApi.me })
-  const logout = useMutation({ mutationFn: authApi.logout, onSuccess: () => queryClient.invalidateQueries({ queryKey: ['session'] }) })
+  const logout = useMutation({ mutationFn: async () => { await detachPushOnLogout(); return authApi.logout() }, onSuccess: () => queryClient.invalidateQueries({ queryKey: ['session'] }) })
   const isAuthenticated = session.data?.authenticated === true
   const can = (permission: string) => isAuthenticated && (session.data?.permissions?.includes(permission) ?? false)
 
@@ -129,6 +131,7 @@ export function App() {
           aria-controls="workspace-navigation" aria-expanded={menuOpen} onClick={() => setMenuOpen(true)}><Menu size={22}/></button><span className="breadcrumb">فضای کار <span>/</span> {location.pathname === '/work-items' ? 'مدیریت کارها' : location.pathname === '/users' ? 'مدیریت کاربران' : location.pathname === '/account' ? 'حساب من' : location.pathname === '/components' ? 'کامپوننت‌های UI' : 'داشبورد'}</span></div>
         <div className="header-end">
           <ThemeButton mode={mode} toggle={toggle}/>
+          {isAuthenticated && <PushControl authenticated={isAuthenticated}/>}
           {isAuthenticated ? <><Link to="/account" className="user-label" dir="ltr" title="پروفایل من">{session.data?.userName}</Link><button className="icon-button" disabled={logout.isPending} aria-label="خروج" onClick={() => logout.mutate()}><LogOut size={19}/></button></> : <Link className="button button--secondary button--sm" to="/login"><LogIn size={16}/>ورود</Link>}
         </div>
       </header>

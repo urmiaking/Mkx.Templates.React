@@ -35,7 +35,8 @@
                                         "**/*.log",
                                         "**/*.tsbuildinfo",
                                         "**/.env",
-                                        "**/.env.*"
+                                        "**/.env.*",
+                                        "**/appsettings.Push.local.json"
                                     ]
                     },
                     {
